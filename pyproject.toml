@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "teacher-reliability-distill"
+version = "0.1.0"
+description = "Reproduce an Apply 1 teacher reliability and calibration study"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.scripts]
+teacher-reliability-env-check = "teacher_reliability.env_check:main"
+teacher-reliability-run = "teacher_reliability.run:main"
+teacher-reliability-report = "teacher_reliability.report:main"
+
+[tool.setuptools.packages.find]
+include = ["teacher_reliability*"]
