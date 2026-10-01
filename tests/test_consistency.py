@@ -1,9 +1,30 @@
 import unittest
+from unittest.mock import patch
 
 from teacher_reliability.consistency import summarize_consistency
 
 
 class SelfConsistencyTests(unittest.TestCase):
+    def test_unresolved_pairwise_comparisons_hide_provisional_majority_metrics(self):
+        with (
+            patch(
+                "teacher_reliability.consistency.check_answers_equivalence",
+                return_value=None,
+            ),
+            patch(
+                "teacher_reliability.consistency.check_answer_parseability",
+                return_value=True,
+            ),
+        ):
+            summary = summarize_consistency(None, ["4", "5"], "4")
+
+        self.assertEqual(summary.majority_comparison_unknown_count, 1)
+        self.assertIsNone(summary.majority_answer)
+        self.assertIsNone(summary.majority_vote_count)
+        self.assertIsNone(summary.majority_vote_share)
+        self.assertIsNone(summary.majority_correct)
+        self.assertEqual(summary.majority_grade_status, "majority_comparison_incomplete")
+
     def test_greedy_agreement_and_majority_use_math_equivalence(self):
         summary = summarize_consistency(
             greedy_answer="1",
@@ -44,6 +65,40 @@ class SelfConsistencyTests(unittest.TestCase):
         summary = summarize_consistency("12", ["12", r"\frac{1}{", None], "12")
 
         self.assertEqual(summary.sample_answer_parseable_count, 1)
+
+    def test_parse_timeout_is_reported_as_unknown_not_as_unparseable(self):
+        with patch(
+            "teacher_reliability.consistency.check_answer_parseability",
+            create=True,
+            side_effect=[True, None],
+        ):
+            summary = summarize_consistency(None, ["12", "13"], "12")
+
+        self.assertEqual(getattr(summary, "sample_answer_parse_unknown_count", 0), 1)
+        self.assertEqual(summary.sample_answer_parseable_count, 1)
+
+    def test_equivalence_timeout_makes_majority_grade_explicitly_incomplete(self):
+        with patch(
+            "teacher_reliability.consistency.check_answers_equivalence",
+            create=True,
+            return_value=None,
+        ):
+            summary = summarize_consistency(None, ["12", "13"], "12")
+
+        self.assertEqual(getattr(summary, "majority_comparison_unknown_count", 0), 1)
+        self.assertIsNone(summary.majority_correct)
+        self.assertEqual(summary.majority_grade_status, "majority_comparison_incomplete")
+
+    def test_unknown_greedy_comparisons_make_agreement_score_unavailable(self):
+        with patch(
+            "teacher_reliability.consistency.check_answers_equivalence",
+            return_value=None,
+        ):
+            summary = summarize_consistency("12", ["12"] * 8, "12")
+
+        self.assertEqual(summary.greedy_agreement_count, 0)
+        self.assertEqual(summary.greedy_agreement_unknown_count, 8)
+        self.assertIsNone(summary.greedy_agreement_share)
 
 
 if __name__ == "__main__":

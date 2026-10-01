@@ -154,6 +154,23 @@ not below chance on any dataset. Otherwise it says the evidence is mixed or
 insufficient. A low-confidence cutoff for a later KD experiment must be chosen
 on a separate calibration/validation split, not on the final evaluation sets.
 
+The report also applies a prespecified coverage gate before it names any
+candidate signal. In every dataset, at least **95% of selected rows** must have
+a parsed source reference, every source-scorable row must have a known binary
+greedy outcome, and the signal must have a score for every such row. The 95%
+floor limits source-reference exclusions to 5% per dataset; unknown grader
+outcomes have zero tolerance because selectively dropping timeout or worker
+failure rows could change the evaluated cohort. The report exposes selected,
+source-scorable, labeled, and unknown counts and their fractions by dataset.
+Failing this gate withholds the recommendation while retaining descriptive
+metrics for the complete run.
+
+The report does not calculate confidence intervals for AUROC or ECE. Its
+ranking is a descriptive candidate for a later KD ablation, not a claim of
+statistical superiority or expected student improvement. Any threshold must
+be selected on a separate calibration/validation split and tested in a
+downstream distillation experiment.
+
 ECE depends on bin count and confidence transformations; normalized entropy
 is a heuristic score, not calibrated correctness probability. AUROC does not
 measure calibration. Quantized weights, prompt choice, answer extraction,

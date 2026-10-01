@@ -1,5 +1,38 @@
 # Teacher Reliability and Calibration
 
+## Current full-study route: local RTX 4060
+
+The active target is the Windows RTX 4060 Laptop GPU with 8 GiB VRAM. The
+local backend keeps Qwen2.5-Math-7B-Instruct at the pinned model commit and
+NF4 double quantization, all 12,221 selected questions, eight samples per
+question, and the 1,024-token output cap. The validated A100 ZIP contributes
+110 complete rows with its source run and archive hash recorded; the local
+runner schedules the other 12,111 rows. Combined reports label rows by their
+execution hardware and show metrics for each origin.
+
+Local generation uses a single resident Transformers worker. A CPU coordinator
+streams progress, writes each greedy answer and sample as an atomic stage, and
+retries unfinished request IDs with their original seeds after CUDA OOM. Batch
+size falls stepwise; the last recovery profile uses an offloaded KV cache only
+when system RAM can hold it with a 2-GiB reserve. Local runs have no deadline by
+default and store frequent checkpoints under `%LOCALAPPDATA%\TeacherReliability\runs`.
+
+Use the start, status, stop, resume, retry, and reporting commands in the
+[local RTX 4060 runbook](docs/runbook.md#full-study-on-the-local-rtx-4060).
+The [detailed project plan](docs/local-rtx4060-project-plan.md) and its
+[remaining-task checklist](docs/remaining-tasks-to-complete-study.md) track
+qualification, review, full execution, reporting, and final delivery.
+The [current project roadmap](docs/project-roadmap.md) gives the ordered
+remaining tasks and the latest checkpoint.
+The owner-approved fast path waives the 12-profile qualification matrix and
+24-question throughput comparison. The current-code smoke completed 9/9 rows
+in 22.60 minutes, with two samples per row and three outputs reaching the
+1,024-token cap. It exercises the local path but does not qualify the full
+run or establish its ETA. The remaining steps are final-strict candidate review,
+branch publication, one-time A100 archive import, and the full resumable run.
+The A100 vLLM path below remains a separate experimental Linux/WSL option and
+is not the local Windows engine.
+
 This repository implements the attached Apply 1 study: **when should a
 distillation pipeline trust a math teacher?** It measures whether the
 confidence signals of `Qwen/Qwen2.5-Math-7B-Instruct` predict answer
@@ -10,16 +43,35 @@ decisions needed to make it executable.
 
 ## Status
 
-The project includes a pinned local CUDA environment, deterministic run
-profiles, resumable per-example checkpoints, and a report generator. The local
-RTX 4060 Laptop GPU (8 GiB VRAM) passed the Python/CUDA/bitsandbytes environment
-check, including the pinned Hugging Face Xet transfer helper. Dataset loading
-was verified against current Hub commits. A 9-row local smoke run completed
-with the 4-bit NF4 teacher, and its report deliberately gives no KD-gating
-recommendation because smoke is not study evidence. The full evaluation has not
-run. In the recorded setup session, the local Vast.ai CLI authenticated and the
-local SSH public key was registered. An A100 instance and either A100 workload
-have not yet run.
+The current local candidate includes the Transformers worker, archive importer,
+seeded batching, checkpoint recovery, integrity validation, and reporting. Its
+current candidate-wide unittest suite passes **262 tests**, including the
+reviewer-directed fixed-input checks; compilation, dependency consistency,
+CLI help, diff, and whitespace checks also pass. Final-strict review call 1
+returned `fix-first`; a fresh accepted review is still required before the
+branch push and sustained run.
+
+The smoke output is under
+%LOCALAPPDATA%/TeacherReliability/runs/smoke-rtx4060-20261001-173011. It
+completed 9/9 rows with zero failures and zero pending across GSM8K, MATH, and
+GSM-Plus, including all seven MATH subjects. It took 22.60 minutes, produced 18
+samples, and exercised the 1,024-token cap three times. The saved worker ended
+at greedy batch 1 and sampling batch 1 with offloaded KV cache after five memory
+adaptations. The 23.87 smoke rows/hour is not a full-study estimate.
+The final smoke heartbeat recorded 896 MiB free VRAM while using the offloaded
+cache: above its 512 MiB emergency floor but below the normal 1 GiB target.
+This keeps the full run explicitly unqualified and requires live memory checks.
+
+The supplied A100 ZIP has passed file-backed validation for 110 complete rows,
+eight samples per row, matching source content/revisions/seeds, and preserved
+A100-reported provenance. Its SHA-256 is
+7fa37f4a6e083e293e4f29606f7643f7ede940569d531410c47e8162130a4d82. It has not
+been imported into a local run. The other 12,111 rows have not started. The
+previous 12-profile qualification remains incomplete historical evidence; the
+current full run will be explicitly labeled fast-start and unqualified. Use the
+[detailed project plan](docs/local-rtx4060-project-plan.md) and
+[remaining-task checklist](docs/remaining-tasks-to-complete-study.md) for the
+current acceptance gates.
 
 ## Study at a glance
 
@@ -46,12 +98,14 @@ and limitations.
 |---|---|---:|---:|---|
 | `smoke` | 1 GSM8K, 1 per MATH subject, 1 GSM-Plus | 2 | 1,024 | Pipeline check; not evidence |
 | `pilot` | 50 GSM8K, 8 per MATH subject, 100 GSM-Plus | 8 | 512 | Runtime and coverage check |
-| `a100_12h` | 150 GSM8K, 50 per MATH subject, 220 GSM-Plus | 8 | 1,024 | About 12 hours under the runbook estimate |
-| `a100_24h` | 300 GSM8K, 50 per MATH subject, 790 GSM-Plus | 8 | 1,024 | About 24 hours under the runbook estimate |
+| `a100_12h` | 150 GSM8K, 50 per MATH subject, 220 GSM-Plus | 8 | 1,024 | Legacy A100 profile; estimate unvalidated |
+| `a100_24h` | 300 GSM8K, 50 per MATH subject, 790 GSM-Plus | 8 | 1,024 | Legacy A100 profile; estimate unvalidated |
 | `full` | All GSM8K test, 50 per MATH subject, all GSM-Plus test | 8 | 1,024 | Intended evaluation |
 
-The A100 profiles retain all seven MATH subject subsets and eight samples per
-example while reducing GSM8K and GSM-Plus rows. They select one GSM-Plus
+The A100 profiles are retained for the earlier cloud workflow; the active
+full-study plan runs locally on the RTX 4060. The A100 profiles retain all
+seven MATH subject subsets and eight samples per example while reducing
+GSM8K and GSM-Plus rows. They select one GSM-Plus
 variation per seed question. Their reports are exploratory and never make a
 full-study KD-gating recommendation. See the [runbook](docs/runbook.md) for
 the measured smoke baseline and runtime assumptions. NVIDIA A100s come in
@@ -63,6 +117,18 @@ from that split by stable hash and grouped by seed question. It does not use
 the older `testmini` layout. See the [runbook](docs/runbook.md) for exact
 counts and the later Vast.ai steps. A smoke or pilot run never receives a
 final-study KD gate recommendation.
+
+The optional A100 vLLM hybrid workflow uses a separate Python 3.12 environment
+for vLLM, exports the same pinned teacher as an NF4 double-quantized artifact,
+and writes to a new run directory. Its implemented setup, run, resume, and
+report commands are in the [runbook](docs/runbook.md#optional-a100-vllm-hybrid-run).
+Use it only from Linux or WSL on a separate A100 environment. It remains
+experimental and has not been qualified for the full run. A code audit found
+that it currently omits execution-origin/scope fields required by complete
+full-study reports, plus a worker stop-reason contract needing a regression.
+It cannot yet produce an accepted complete study report; use the native Windows
+Transformers local path for the approved RTX 4060 run. A single-GPU vLLM trial
+does not require Ray.
 
 Loading rejects an empty requested split, including any individual MATH
 subject. A full report requires GSM8K, MATH, and GSM-Plus even if its saved

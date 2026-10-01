@@ -5,11 +5,16 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Iterator
 
 from filelock import FileLock, Timeout
+
+
+_ATOMIC_REPLACE_ATTEMPTS = 5
+_ATOMIC_REPLACE_INITIAL_DELAY_SECONDS = 0.01
 
 
 class RunAlreadyActive(RuntimeError):
@@ -65,7 +70,17 @@ def atomic_write_json(path: Path, value: dict[str, Any]) -> None:
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
+        for attempt in range(_ATOMIC_REPLACE_ATTEMPTS):
+            try:
+                os.replace(temporary_path, path)
+                break
+            except PermissionError as exc:
+                if attempt + 1 == _ATOMIC_REPLACE_ATTEMPTS:
+                    raise PermissionError(
+                        f"could not atomically replace {path} after "
+                        f"{_ATOMIC_REPLACE_ATTEMPTS} attempts: {exc}"
+                    ) from exc
+                time.sleep(_ATOMIC_REPLACE_INITIAL_DELAY_SECONDS * (2**attempt))
     finally:
         if temporary_path is not None and temporary_path.exists():
             temporary_path.unlink()

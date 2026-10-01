@@ -98,6 +98,18 @@ class RunPipelineTests(unittest.TestCase):
             self.assertTrue(record["samples"][1]["was_truncated"])
             self.assertNotIn("gold_solution", record)
 
+    def test_run_persists_unknown_math_verify_checks_separately(self):
+        with tempfile.TemporaryDirectory() as temporary, patch(
+            "teacher_reliability.consistency.check_answer_parseability",
+            return_value=None,
+        ):
+            run_dir = Path(temporary) / "run"
+            self.run_with(run_dir)
+
+            record = json.loads((run_dir / "predictions.jsonl").read_text(encoding="utf-8"))
+            summary = record["self_consistency"]
+            self.assertEqual(summary.get("sample_answer_parse_unknown_count", 0), 2)
+
     def test_resume_skips_complete_rows_without_duplicate_checkpoints(self):
         with tempfile.TemporaryDirectory() as temporary:
             run_dir = Path(temporary) / "run"

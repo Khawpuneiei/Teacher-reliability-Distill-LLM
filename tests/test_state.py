@@ -1,7 +1,9 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from teacher_reliability.state import (
     RunAlreadyActive,
@@ -111,6 +113,55 @@ class RunStateTests(unittest.TestCase):
             atomic_write_json(path, {"z": 2, "a": 1})
 
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"a": 1, "z": 2})
+            self.assertEqual(list(Path(temporary).iterdir()), [path])
+
+    def test_json_manifest_retries_transient_replace_denial_and_preserves_old_file_on_persistent_denial(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "qualification.json"
+            path.write_text('{"version": 1}\n', encoding="utf-8")
+            real_replace = os.replace
+            attempts = []
+
+            def deny_twice_then_replace(source, destination):
+                attempts.append((Path(source), Path(destination)))
+                if len(attempts) < 3:
+                    raise PermissionError("temporary Windows file lock")
+                return real_replace(source, destination)
+
+            failure = None
+            with patch("teacher_reliability.state.os.replace", side_effect=deny_twice_then_replace):
+                try:
+                    atomic_write_json(path, {"version": 2})
+                except PermissionError as exc:
+                    failure = exc
+
+            self.assertIsNone(failure, "a transient replace denial must be retried")
+            self.assertEqual(len(attempts), 3)
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"version": 2})
+            self.assertEqual(list(Path(temporary).iterdir()), [path])
+
+            previous_payload = path.read_bytes()
+            persistent_failure = None
+            persistent_attempts = []
+
+            def deny_persistently(_source, _destination):
+                persistent_attempts.append(None)
+                raise PermissionError("persistent Windows file lock")
+
+            with patch(
+                "teacher_reliability.state.os.replace",
+                side_effect=deny_persistently,
+            ):
+                try:
+                    atomic_write_json(path, {"version": 3})
+                except PermissionError as exc:
+                    persistent_failure = exc
+
+            self.assertIsInstance(persistent_failure, PermissionError)
+            self.assertIn("persistent Windows file lock", str(persistent_failure))
+            self.assertIn("after 5 attempts", str(persistent_failure))
+            self.assertEqual(len(persistent_attempts), 5)
+            self.assertEqual(path.read_bytes(), previous_payload)
             self.assertEqual(list(Path(temporary).iterdir()), [path])
 
     def test_json_manifest_handles_integer_and_string_device_keys(self):
