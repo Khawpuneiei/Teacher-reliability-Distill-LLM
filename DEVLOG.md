@@ -2014,3 +2014,11 @@ instance. The optional A100/vLLM path remains experimental.
 - Run `mini12h-rtx4060-20261001-230236`, started 2026-10-01 23:02 SGT, first pass ended 04:40 SGT with 109/111 (2 rows failed `InsufficientHostMemory` for the offloaded-KV-cache 2 GiB reserve). `--resume --retry-failed` completed both: **111/111, 0 failed, 0 pending**.
 - Measured throughput: about **19.4 rows/hour** (greedy 1 / sample 1, offloaded KV cache, GPU ~85 °C with thermal slowdown).
 - Report: `results/mini12h-rtx4060-20261001/` (recommendation status exploratory). Raw-run backup `mini12h-rtx4060-20261001-230236.tar.gz`, SHA-256 `06ed0976394cc485ee5425160fb08ea0ab59e28ce14e41a42d7bc599a4cd1014`; restore check reproduced the 111-line `predictions.jsonl` with identical SHA-256.
+
+## 2026-10-02 — Mini distillation follow-up
+
+- `scripts/mini_distill.py`: LoRA SFT of Qwen2.5-0.5B on the mini_12h teacher outputs; conditions base / kd_all / kd_gated (self-consistency, majority share ≥ 0.75) / kd_oracle; 640 held-out questions; paired bootstrap.
+- `peft==0.15.2` installed with `--no-deps --target %LOCALAPPDATA%\TeacherReliability\pylib` (project venv unchanged; run with that folder on `PYTHONPATH`).
+- Fixes found during the smoke: loader returns only the profile selection (held-out pool now loads the `full` profile); base student never learned `<|im_end|>`, so training ends responses with `<|endoftext|>`, and every condition is graded on text through its first `\boxed{}`.
+- `kd_oracle` hit CUDA OOM in the first process after three conditions; a fresh-process resume with identical settings completed it.
+- Overall held-out accuracy: base 25.5%, kd_all 37.8%, kd_gated 38.8%, kd_oracle 37.0%. Gate − all = +0.9 pts, 95% CI [−2.0, +4.1]. See `results/mini-distill-20261002/report.md`.

@@ -1,0 +1,188 @@
+{
+  "base": {
+    "summary": {
+      "gsm8k": {
+        "n": 300,
+        "accuracy": 0.2833333333333333
+      },
+      "gsm_plus": {
+        "n": 200,
+        "accuracy": 0.225
+      },
+      "math": {
+        "n": 140,
+        "accuracy": 0.2357142857142857
+      },
+      "overall": {
+        "n": 640,
+        "accuracy": 0.2546875,
+        "macro_accuracy": 0.24801587301587302,
+        "truncated_fraction": 0.2046875
+      }
+    },
+    "train_seconds": 3.782038450241089,
+    "total_seconds": 286.22931122779846,
+    "training_set": null
+  },
+  "kd_all": {
+    "summary": {
+      "gsm8k": {
+        "n": 300,
+        "accuracy": 0.4666666666666667
+      },
+      "gsm_plus": {
+        "n": 200,
+        "accuracy": 0.33
+      },
+      "math": {
+        "n": 140,
+        "accuracy": 0.2571428571428571
+      },
+      "overall": {
+        "n": 640,
+        "accuracy": 0.378125,
+        "macro_accuracy": 0.35126984126984123,
+        "truncated_fraction": 0.125
+      }
+    },
+    "train_seconds": 423.8425033092499,
+    "total_seconds": 716.4833147525787,
+    "training_set": {
+      "responses": 955,
+      "questions": 111
+    }
+  },
+  "kd_gated": {
+    "summary": {
+      "gsm8k": {
+        "n": 300,
+        "accuracy": 0.4666666666666667
+      },
+      "gsm_plus": {
+        "n": 200,
+        "accuracy": 0.36
+      },
+      "math": {
+        "n": 140,
+        "accuracy": 0.2571428571428571
+      },
+      "overall": {
+        "n": 640,
+        "accuracy": 0.3875,
+        "macro_accuracy": 0.36126984126984124,
+        "truncated_fraction": 0.1203125
+      }
+    },
+    "train_seconds": 378.13926887512207,
+    "total_seconds": 669.5251667499542,
+    "training_set": {
+      "responses": 824,
+      "questions": 95
+    }
+  },
+  "kd_oracle": {
+    "summary": {
+      "gsm8k": {
+        "n": 300,
+        "accuracy": 0.44333333333333336
+      },
+      "gsm_plus": {
+        "n": 200,
+        "accuracy": 0.33
+      },
+      "math": {
+        "n": 140,
+        "accuracy": 0.2714285714285714
+      },
+      "overall": {
+        "n": 640,
+        "accuracy": 0.3703125,
+        "macro_accuracy": 0.34825396825396826,
+        "truncated_fraction": 0.10625
+      }
+    },
+    "train_seconds": 404.76985263824463,
+    "total_seconds": 703.0975439548492,
+    "training_set": {
+      "responses": 797,
+      "questions": 97
+    }
+  },
+  "_comparisons": {
+    "kd_all_minus_base": {
+      "delta": 0.1234375,
+      "ci95": [
+        0.0828125,
+        0.1625
+      ]
+    },
+    "kd_gated_minus_base": {
+      "delta": 0.1328125,
+      "ci95": [
+        0.09375,
+        0.171875
+      ]
+    },
+    "kd_gated_minus_kd_all": {
+      "delta": 0.009375,
+      "ci95": [
+        -0.0203125,
+        0.040625
+      ]
+    },
+    "kd_oracle_minus_kd_all": {
+      "delta": -0.0078125,
+      "ci95": [
+        -0.0390625,
+        0.0234375
+      ]
+    },
+    "kd_oracle_minus_kd_gated": {
+      "delta": -0.0171875,
+      "ci95": [
+        -0.0484375,
+        0.0140625
+      ]
+    }
+  },
+  "_config": {
+    "teacher_run": "mini12h-rtx4060-20261001-230236",
+    "out_dir": "C:\\Users\\user\\AppData\\Local\\TeacherReliability\\distill\\mini-distill-20261002",
+    "conditions": [
+      "base",
+      "kd_all",
+      "kd_gated",
+      "kd_oracle"
+    ],
+    "gate_threshold": 0.75,
+    "eval_gsm8k": 300,
+    "eval_math_per_subject": 20,
+    "eval_gsm_plus": 200,
+    "eval_seed": 43,
+    "eval_batch": 32,
+    "eval_max_new_tokens": 512,
+    "train_seed": 0,
+    "epochs": 2,
+    "lr": 0.0002,
+    "lora_r": 16,
+    "micro_batch": 2,
+    "grad_accum": 8,
+    "max_train_tokens": 1400,
+    "student": "Qwen/Qwen2.5-0.5B",
+    "student_revision": "060db6499f32faf8b98477b0a26969ef7d8b9987",
+    "training_sets": {
+      "kd_all": {
+        "responses": 955,
+        "questions": 111
+      },
+      "kd_gated": {
+        "responses": 824,
+        "questions": 95
+      },
+      "kd_oracle": {
+        "responses": 797,
+        "questions": 97
+      }
+    }
+  }
+}

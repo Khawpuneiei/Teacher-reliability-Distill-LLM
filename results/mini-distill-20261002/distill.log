@@ -1,0 +1,134 @@
+2026-10-02 05:03:38 teacher run mini12h-rtx4060-20261001-230236: 111 complete rows
+2026-10-02 05:03:42 training sets: {"kd_all": {"responses": 955, "questions": 111}, "kd_gated": {"responses": 824, "questions": 95}, "kd_oracle": {"responses": 797, "questions": 97}}
+2026-10-02 05:03:45 held-out eval: 640 questions {'gsm8k': 300, 'gsm_plus': 200, 'math': 140}
+2026-10-02 05:03:46 base: start
+2026-10-02 05:04:03   generated 32/640
+2026-10-02 05:04:15   generated 64/640
+2026-10-02 05:04:28   generated 96/640
+2026-10-02 05:04:41   generated 128/640
+2026-10-02 05:04:55   generated 160/640
+2026-10-02 05:05:08   generated 192/640
+2026-10-02 05:05:22   generated 224/640
+2026-10-02 05:05:35   generated 256/640
+2026-10-02 05:05:49   generated 288/640
+2026-10-02 05:06:03   generated 320/640
+2026-10-02 05:06:17   generated 352/640
+2026-10-02 05:06:31   generated 384/640
+2026-10-02 05:06:45   generated 416/640
+2026-10-02 05:06:58   generated 448/640
+2026-10-02 05:07:13   generated 480/640
+2026-10-02 05:07:29   generated 512/640
+2026-10-02 05:07:43   generated 544/640
+2026-10-02 05:07:58   generated 576/640
+2026-10-02 05:08:13   generated 608/640
+2026-10-02 05:08:31   generated 640/640
+2026-10-02 05:08:32 base: {"gsm8k": {"n": 300, "accuracy": 0.2833333333333333}, "gsm_plus": {"n": 200, "accuracy": 0.225}, "math": {"n": 140, "accuracy": 0.2357142857142857}, "overall": {"n": 640, "accuracy": 0.2546875, "macro_accuracy": 0.24801587301587302, "truncated_fraction": 0.2046875}}
+2026-10-02 05:08:32 kd_all: start
+2026-10-02 05:09:17   epoch 1 step 10/120 loss 0.1839
+2026-10-02 05:09:57   epoch 1 step 20/120 loss 0.1695
+2026-10-02 05:10:30   epoch 1 step 30/120 loss 0.1544
+2026-10-02 05:11:02   epoch 1 step 40/120 loss 0.1271
+2026-10-02 05:11:37   epoch 1 step 50/120 loss 0.1125
+2026-10-02 05:12:12   epoch 1 step 60/120 loss 0.1315
+2026-10-02 05:12:45   epoch 2 step 70/120 loss 0.0941
+2026-10-02 05:13:19   epoch 2 step 80/120 loss 0.0888
+2026-10-02 05:13:52   epoch 2 step 90/120 loss 0.0831
+2026-10-02 05:14:28   epoch 2 step 100/120 loss 0.0888
+2026-10-02 05:15:03   epoch 2 step 110/120 loss 0.0812
+2026-10-02 05:15:36   epoch 2 step 120/120 loss 0.0841
+2026-10-02 05:15:49   generated 32/640
+2026-10-02 05:16:03   generated 64/640
+2026-10-02 05:16:17   generated 96/640
+2026-10-02 05:16:31   generated 128/640
+2026-10-02 05:16:45   generated 160/640
+2026-10-02 05:16:59   generated 192/640
+2026-10-02 05:17:13   generated 224/640
+2026-10-02 05:17:27   generated 256/640
+2026-10-02 05:17:41   generated 288/640
+2026-10-02 05:17:56   generated 320/640
+2026-10-02 05:18:10   generated 352/640
+2026-10-02 05:18:25   generated 384/640
+2026-10-02 05:18:39   generated 416/640
+2026-10-02 05:18:53   generated 448/640
+2026-10-02 05:19:08   generated 480/640
+2026-10-02 05:19:24   generated 512/640
+2026-10-02 05:19:39   generated 544/640
+2026-10-02 05:19:54   generated 576/640
+2026-10-02 05:20:10   generated 608/640
+2026-10-02 05:20:28   generated 640/640
+2026-10-02 05:20:28 kd_all: {"gsm8k": {"n": 300, "accuracy": 0.4666666666666667}, "gsm_plus": {"n": 200, "accuracy": 0.33}, "math": {"n": 140, "accuracy": 0.2571428571428571}, "overall": {"n": 640, "accuracy": 0.378125, "macro_accuracy": 0.35126984126984123, "truncated_fraction": 0.125}}
+2026-10-02 05:20:28 kd_gated: start
+2026-10-02 05:21:27   epoch 1 step 10/104 loss 0.1752
+2026-10-02 05:22:13   epoch 1 step 20/104 loss 0.1414
+2026-10-02 05:22:45   epoch 1 step 30/104 loss 0.1281
+2026-10-02 05:23:16   epoch 1 step 40/104 loss 0.1185
+2026-10-02 05:23:53   epoch 1 step 50/104 loss 0.1112
+2026-10-02 05:24:23   epoch 2 step 60/104 loss 0.0732
+2026-10-02 05:24:55   epoch 2 step 70/104 loss 0.0745
+2026-10-02 05:25:27   epoch 2 step 80/104 loss 0.0738
+2026-10-02 05:26:01   epoch 2 step 90/104 loss 0.0776
+2026-10-02 05:26:34   epoch 2 step 100/104 loss 0.0789
+2026-10-02 05:26:46   epoch 2 step 104/104 loss 0.0895
+2026-10-02 05:27:00   generated 32/640
+2026-10-02 05:27:14   generated 64/640
+2026-10-02 05:27:29   generated 96/640
+2026-10-02 05:27:43   generated 128/640
+2026-10-02 05:27:57   generated 160/640
+2026-10-02 05:28:12   generated 192/640
+2026-10-02 05:28:26   generated 224/640
+2026-10-02 05:28:40   generated 256/640
+2026-10-02 05:28:55   generated 288/640
+2026-10-02 05:29:08   generated 320/640
+2026-10-02 05:29:23   generated 352/640
+2026-10-02 05:29:37   generated 384/640
+2026-10-02 05:29:51   generated 416/640
+2026-10-02 05:30:03   generated 448/640
+2026-10-02 05:30:18   generated 480/640
+2026-10-02 05:30:33   generated 512/640
+2026-10-02 05:30:48   generated 544/640
+2026-10-02 05:31:03   generated 576/640
+2026-10-02 05:31:19   generated 608/640
+2026-10-02 05:31:37   generated 640/640
+2026-10-02 05:31:38 kd_gated: {"gsm8k": {"n": 300, "accuracy": 0.4666666666666667}, "gsm_plus": {"n": 200, "accuracy": 0.36}, "math": {"n": 140, "accuracy": 0.2571428571428571}, "overall": {"n": 640, "accuracy": 0.3875, "macro_accuracy": 0.36126984126984124, "truncated_fraction": 0.1203125}}
+2026-10-02 05:31:38 kd_oracle: start
+2026-10-02 05:32:17   epoch 1 step 10/100 loss 0.1703
+2026-10-02 05:32:57   epoch 1 step 20/100 loss 0.1414
+2026-10-02 05:33:28 teacher run mini12h-rtx4060-20261001-230236: 111 complete rows
+2026-10-02 05:33:32 training sets: {"kd_all": {"responses": 955, "questions": 111}, "kd_gated": {"responses": 824, "questions": 95}, "kd_oracle": {"responses": 797, "questions": 97}}
+2026-10-02 05:33:34 held-out eval: 640 questions {'gsm8k': 300, 'gsm_plus': 200, 'math': 140}
+2026-10-02 05:33:34 base: already evaluated, skipping
+2026-10-02 05:33:34 kd_all: already evaluated, skipping
+2026-10-02 05:33:34 kd_gated: already evaluated, skipping
+2026-10-02 05:33:34 kd_oracle: start
+2026-10-02 05:34:25   epoch 1 step 10/100 loss 0.1702
+2026-10-02 05:35:14   epoch 1 step 20/100 loss 0.1414
+2026-10-02 05:35:59   epoch 1 step 30/100 loss 0.1269
+2026-10-02 05:36:34   epoch 1 step 40/100 loss 0.1176
+2026-10-02 05:37:10   epoch 1 step 50/100 loss 0.1166
+2026-10-02 05:37:49   epoch 2 step 60/100 loss 0.0775
+2026-10-02 05:38:28   epoch 2 step 70/100 loss 0.0781
+2026-10-02 05:39:05   epoch 2 step 80/100 loss 0.0804
+2026-10-02 05:39:42   epoch 2 step 90/100 loss 0.0750
+2026-10-02 05:40:19   epoch 2 step 100/100 loss 0.0733
+2026-10-02 05:40:32   generated 32/640
+2026-10-02 05:40:46   generated 64/640
+2026-10-02 05:41:00   generated 96/640
+2026-10-02 05:41:14   generated 128/640
+2026-10-02 05:41:27   generated 160/640
+2026-10-02 05:41:42   generated 192/640
+2026-10-02 05:41:56   generated 224/640
+2026-10-02 05:42:11   generated 256/640
+2026-10-02 05:42:25   generated 288/640
+2026-10-02 05:42:39   generated 320/640
+2026-10-02 05:42:53   generated 352/640
+2026-10-02 05:43:08   generated 384/640
+2026-10-02 05:43:22   generated 416/640
+2026-10-02 05:43:41   generated 448/640
+2026-10-02 05:43:56   generated 480/640
+2026-10-02 05:44:12   generated 512/640
+2026-10-02 05:44:27   generated 544/640
+2026-10-02 05:44:42   generated 576/640
+2026-10-02 05:44:58   generated 608/640
+2026-10-02 05:45:16   generated 640/640
+2026-10-02 05:45:17 kd_oracle: {"gsm8k": {"n": 300, "accuracy": 0.44333333333333336}, "gsm_plus": {"n": 200, "accuracy": 0.33}, "math": {"n": 140, "accuracy": 0.2714285714285714}, "overall": {"n": 640, "accuracy": 0.3703125, "macro_accuracy": 0.34825396825396826, "truncated_fraction": 0.10625}}
+2026-10-02 05:45:22 comparisons: {"kd_all_minus_base": {"delta": 0.1234375, "ci95": [0.0828125, 0.1625]}, "kd_gated_minus_base": {"delta": 0.1328125, "ci95": [0.09375, 0.171875]}, "kd_gated_minus_kd_all": {"delta": 0.009375, "ci95": [-0.0203125, 0.040625]}, "kd_oracle_minus_kd_all": {"delta": -0.0078125, "ci95": [-0.0390625, 0.0234375]}, "kd_oracle_minus_kd_gated": {"delta": -0.0171875, "ci95": [-0.0484375, 0.0140625]}}
