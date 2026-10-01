@@ -68,6 +68,11 @@ PROFILES = {
     "full": RunProfile(
         "full", None, 50, None, False, "test", 8, 1024
     ),
+    # Local RTX 4060 mini study: full protocol (8 samples, 1,024 tokens) on
+    # 111 rows, sized from measured batch-one rates to finish within 12 hours.
+    "mini_12h": RunProfile(
+        "mini_12h", 40, 3, 50, True, "test", 8, 1024, target_hours=12
+    ),
     "a100_12h": RunProfile(
         "a100_12h", 150, 50, 220, True, "test", 8, 1024, target_hours=12
     ),

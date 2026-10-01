@@ -13,6 +13,30 @@ That smoke predates the current resumable local backend. Its worker recovery is
 still being qualified; do not treat baseline throughput as an ETA or an OOM
 attempt as a benchmark result.
 
+## 12-hour mini study on the local RTX 4060 (`mini_12h`)
+
+The full 12,111-row local remainder needs roughly 1,000 GPU-hours at the
+measured batch-one rate (about 11.3 rows/hour). The `mini_12h` profile keeps
+the full protocol (same model revision, NF4/FP16, seed 42, eight samples,
+temperature 0.7, top-k 50, 1,024-token cap) on a deterministic 111-row subset:
+40 GSM8K, 21 MATH (3 per subject), and 50 GSM-Plus (one per seed question).
+At the measured per-dataset rates this is about 9.3 active hours; a persisted
+`--max-runtime-hours 12` deadline bounds it. A100 rows are not imported
+(the importer accepts only the `full` profile), and the report labels the
+result exploratory, with no full-study gate recommendation.
+
+```powershell
+$RunDir = Join-Path $env:LOCALAPPDATA ('TeacherReliability\runs\mini12h-rtx4060-' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+$null = New-Item -ItemType Directory -Path $RunDir -Force
+$Python = (Resolve-Path '.\.venv\Scripts\python.exe').Path
+$RunnerArgs = @('-u', '-m', 'teacher_reliability.run', '--backend', 'transformers-local', '--device-preset', 'rtx4060-8gb', '--profile', 'mini_12h', '--seed', '42', '--local-files-only', '--max-runtime-hours', '12', '--run-dir', $RunDir)
+$RunProcess = Start-Process -FilePath $Python -ArgumentList $RunnerArgs -WorkingDirectory (Get-Location).Path -RedirectStandardOutput (Join-Path $RunDir 'runner.log') -RedirectStandardError (Join-Path $RunDir 'runner-error.log') -WindowStyle Hidden -PassThru
+$RunProcess.Id | Set-Content (Join-Path $RunDir 'runner.pid')
+```
+
+Status, pause, and resume use the same commands as the full study below
+(add `--resume` with the same profile and run directory).
+
 ## Full study on the local RTX 4060
 
 The active plan is to finish all 12,221 selected questions on the Windows RTX

@@ -569,7 +569,7 @@ def _macro_and_recommendation(
             "reason": "The run is incomplete; no gate recommendation is made.",
         }
     if profile != "full":
-        if profile in {"a100_12h", "a100_24h"}:
+        if profile in {"a100_12h", "a100_24h", "mini_12h"}:
             return macro, {
                 "signal": None,
                 "status": "exploratory",
