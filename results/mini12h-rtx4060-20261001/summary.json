@@ -1,0 +1,605 @@
+{
+  "by_dataset": {
+    "gsm8k": {
+      "greedy_accuracy": 0.85,
+      "greedy_agreement_unknown_count": 0,
+      "majority_comparison_unknown_count": 0,
+      "outcome_label_coverage": 1.0,
+      "prediction_parse_coverage": 1.0,
+      "sample_answer_parse_coverage": 0.99375,
+      "sample_answer_parse_unknown_count": 0,
+      "sample_answer_parseable_count": 318,
+      "sample_count": 320,
+      "scorable_rows": 40,
+      "selected_rows": 40,
+      "signal_score_coverage": {
+        "answer_token_probability": {
+          "coverage": 1.0,
+          "scored_rows": 40,
+          "source_scorable_rows": 40
+        },
+        "entropy_confidence": {
+          "coverage": 1.0,
+          "scored_rows": 40,
+          "source_scorable_rows": 40
+        },
+        "self_consistency_agreement": {
+          "coverage": 1.0,
+          "scored_rows": 40,
+          "source_scorable_rows": 40
+        },
+        "sequence_geometric_probability": {
+          "coverage": 1.0,
+          "scored_rows": 40,
+          "source_scorable_rows": 40
+        }
+      },
+      "source_scorable_fraction": 1.0,
+      "source_scorable_rows": 40,
+      "source_unscorable_rows": 0,
+      "total_rows": 40,
+      "unknown_outcome_label_count": 0,
+      "unscorable_rows": 0
+    },
+    "gsm_plus": {
+      "greedy_accuracy": 0.8125,
+      "greedy_agreement_unknown_count": 0,
+      "majority_comparison_unknown_count": 0,
+      "outcome_label_coverage": 1.0,
+      "prediction_parse_coverage": 0.96,
+      "sample_answer_parse_coverage": 0.96,
+      "sample_answer_parse_unknown_count": 0,
+      "sample_answer_parseable_count": 384,
+      "sample_count": 400,
+      "scorable_rows": 48,
+      "selected_rows": 50,
+      "signal_score_coverage": {
+        "answer_token_probability": {
+          "coverage": 0.9791666666666666,
+          "scored_rows": 47,
+          "source_scorable_rows": 48
+        },
+        "entropy_confidence": {
+          "coverage": 1.0,
+          "scored_rows": 48,
+          "source_scorable_rows": 48
+        },
+        "self_consistency_agreement": {
+          "coverage": 1.0,
+          "scored_rows": 48,
+          "source_scorable_rows": 48
+        },
+        "sequence_geometric_probability": {
+          "coverage": 1.0,
+          "scored_rows": 48,
+          "source_scorable_rows": 48
+        }
+      },
+      "source_scorable_fraction": 0.96,
+      "source_scorable_rows": 48,
+      "source_unscorable_rows": 2,
+      "total_rows": 50,
+      "unknown_outcome_label_count": 0,
+      "unscorable_rows": 2
+    },
+    "math": {
+      "greedy_accuracy": 0.7142857142857143,
+      "greedy_agreement_unknown_count": 0,
+      "majority_comparison_unknown_count": 0,
+      "outcome_label_coverage": 1.0,
+      "prediction_parse_coverage": 0.9047619047619048,
+      "sample_answer_parse_coverage": 0.8869047619047619,
+      "sample_answer_parse_unknown_count": 0,
+      "sample_answer_parseable_count": 149,
+      "sample_count": 168,
+      "scorable_rows": 21,
+      "selected_rows": 21,
+      "signal_score_coverage": {
+        "answer_token_probability": {
+          "coverage": 0.9047619047619048,
+          "scored_rows": 19,
+          "source_scorable_rows": 21
+        },
+        "entropy_confidence": {
+          "coverage": 1.0,
+          "scored_rows": 21,
+          "source_scorable_rows": 21
+        },
+        "self_consistency_agreement": {
+          "coverage": 1.0,
+          "scored_rows": 21,
+          "source_scorable_rows": 21
+        },
+        "sequence_geometric_probability": {
+          "coverage": 1.0,
+          "scored_rows": 21,
+          "source_scorable_rows": 21
+        }
+      },
+      "source_scorable_fraction": 1.0,
+      "source_scorable_rows": 21,
+      "source_unscorable_rows": 0,
+      "total_rows": 21,
+      "unknown_outcome_label_count": 0,
+      "unscorable_rows": 0
+    }
+  },
+  "by_execution": {
+    "rtx4060-local": {
+      "by_dataset": {
+        "gsm8k": 40,
+        "gsm_plus": 50,
+        "math": 21
+      },
+      "hardware": "NVIDIA GeForce RTX 4060 Laptop GPU",
+      "row_count": 111
+    }
+  },
+  "completed_count": 111,
+  "created_at": "2026-10-01T20:45:46+00:00",
+  "execution_label": "RTX 4060 local",
+  "failed_count": 0,
+  "macro": {
+    "answer_token_probability": {
+      "all_datasets_defined": true,
+      "coverage_by_dataset": {
+        "gsm8k": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            }
+          },
+          "source_scorable_fraction": 1.0
+        },
+        "gsm_plus": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9791666666666666,
+              "scored_rows": 47,
+              "source_scorable_rows": 48
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            }
+          },
+          "source_scorable_fraction": 0.96
+        },
+        "math": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9047619047619048,
+              "scored_rows": 19,
+              "source_scorable_rows": 21
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            }
+          },
+          "source_scorable_fraction": 1.0
+        }
+      },
+      "coverage_ready": true,
+      "eligible_for_recommendation": false,
+      "macro_auroc": 0.7806561085972851,
+      "macro_ece": 0.1738900002965141,
+      "minimum_dataset_auroc": 0.7156862745098039
+    },
+    "entropy_confidence": {
+      "all_datasets_defined": true,
+      "coverage_by_dataset": {
+        "gsm8k": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            }
+          },
+          "source_scorable_fraction": 1.0
+        },
+        "gsm_plus": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9791666666666666,
+              "scored_rows": 47,
+              "source_scorable_rows": 48
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            }
+          },
+          "source_scorable_fraction": 0.96
+        },
+        "math": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9047619047619048,
+              "scored_rows": 19,
+              "source_scorable_rows": 21
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            }
+          },
+          "source_scorable_fraction": 1.0
+        }
+      },
+      "coverage_ready": true,
+      "eligible_for_recommendation": true,
+      "macro_auroc": 0.8369532428355958,
+      "macro_ece": 0.18299528586183444,
+      "minimum_dataset_auroc": 0.7647058823529411
+    },
+    "self_consistency_agreement": {
+      "all_datasets_defined": true,
+      "coverage_by_dataset": {
+        "gsm8k": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            }
+          },
+          "source_scorable_fraction": 1.0
+        },
+        "gsm_plus": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9791666666666666,
+              "scored_rows": 47,
+              "source_scorable_rows": 48
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            }
+          },
+          "source_scorable_fraction": 0.96
+        },
+        "math": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9047619047619048,
+              "scored_rows": 19,
+              "source_scorable_rows": 21
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            }
+          },
+          "source_scorable_fraction": 1.0
+        }
+      },
+      "coverage_ready": true,
+      "eligible_for_recommendation": true,
+      "macro_auroc": 0.8603583598681638,
+      "macro_ece": 0.11187996031746032,
+      "minimum_dataset_auroc": 0.7364672364672364
+    },
+    "sequence_geometric_probability": {
+      "all_datasets_defined": true,
+      "coverage_by_dataset": {
+        "gsm8k": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 40,
+              "source_scorable_rows": 40
+            }
+          },
+          "source_scorable_fraction": 1.0
+        },
+        "gsm_plus": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9791666666666666,
+              "scored_rows": 47,
+              "source_scorable_rows": 48
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 48,
+              "source_scorable_rows": 48
+            }
+          },
+          "source_scorable_fraction": 0.96
+        },
+        "math": {
+          "outcome_label_coverage": 1.0,
+          "signal_score_coverage": {
+            "answer_token_probability": {
+              "coverage": 0.9047619047619048,
+              "scored_rows": 19,
+              "source_scorable_rows": 21
+            },
+            "entropy_confidence": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "self_consistency_agreement": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            },
+            "sequence_geometric_probability": {
+              "coverage": 1.0,
+              "scored_rows": 21,
+              "source_scorable_rows": 21
+            }
+          },
+          "source_scorable_fraction": 1.0
+        }
+      },
+      "coverage_ready": true,
+      "eligible_for_recommendation": true,
+      "macro_auroc": 0.8378107368303448,
+      "macro_ece": 0.15191946012166777,
+      "minimum_dataset_auroc": 0.7892156862745098
+    }
+  },
+  "malformed_row_count": 0,
+  "malformed_rows": [],
+  "missing_datasets": [],
+  "origin_count_validation": null,
+  "origin_provenance_validation": null,
+  "pending_count": 0,
+  "profile": "mini_12h",
+  "qualification": null,
+  "recommendation": {
+    "reason": "The mini_12h time-bounded subset is not the full benchmark; no full-study KD-gate recommendation is made.",
+    "signal": null,
+    "status": "exploratory"
+  },
+  "recommendation_coverage_gate": {
+    "by_dataset": {
+      "gsm8k": {
+        "outcome_label_coverage": 1.0,
+        "signal_score_coverage": {
+          "answer_token_probability": {
+            "coverage": 1.0,
+            "scored_rows": 40,
+            "source_scorable_rows": 40
+          },
+          "entropy_confidence": {
+            "coverage": 1.0,
+            "scored_rows": 40,
+            "source_scorable_rows": 40
+          },
+          "self_consistency_agreement": {
+            "coverage": 1.0,
+            "scored_rows": 40,
+            "source_scorable_rows": 40
+          },
+          "sequence_geometric_probability": {
+            "coverage": 1.0,
+            "scored_rows": 40,
+            "source_scorable_rows": 40
+          }
+        },
+        "source_scorable_fraction": 1.0
+      },
+      "gsm_plus": {
+        "outcome_label_coverage": 1.0,
+        "signal_score_coverage": {
+          "answer_token_probability": {
+            "coverage": 0.9791666666666666,
+            "scored_rows": 47,
+            "source_scorable_rows": 48
+          },
+          "entropy_confidence": {
+            "coverage": 1.0,
+            "scored_rows": 48,
+            "source_scorable_rows": 48
+          },
+          "self_consistency_agreement": {
+            "coverage": 1.0,
+            "scored_rows": 48,
+            "source_scorable_rows": 48
+          },
+          "sequence_geometric_probability": {
+            "coverage": 1.0,
+            "scored_rows": 48,
+            "source_scorable_rows": 48
+          }
+        },
+        "source_scorable_fraction": 0.96
+      },
+      "math": {
+        "outcome_label_coverage": 1.0,
+        "signal_score_coverage": {
+          "answer_token_probability": {
+            "coverage": 0.9047619047619048,
+            "scored_rows": 19,
+            "source_scorable_rows": 21
+          },
+          "entropy_confidence": {
+            "coverage": 1.0,
+            "scored_rows": 21,
+            "source_scorable_rows": 21
+          },
+          "self_consistency_agreement": {
+            "coverage": 1.0,
+            "scored_rows": 21,
+            "source_scorable_rows": 21
+          },
+          "sequence_geometric_probability": {
+            "coverage": 1.0,
+            "scored_rows": 21,
+            "source_scorable_rows": 21
+          }
+        },
+        "source_scorable_fraction": 1.0
+      }
+    },
+    "minimum_source_scorable_fraction": 0.95,
+    "required_outcome_label_coverage": 1.0,
+    "valid": true
+  },
+  "required_datasets": [
+    "gsm8k",
+    "gsm_plus",
+    "math"
+  ],
+  "revision_validation": null,
+  "run_complete": true,
+  "run_id": "mini12h-rtx4060-20261001-230236",
+  "run_status": "complete",
+  "selected_count": 111,
+  "unknown_count_validation": null
+}

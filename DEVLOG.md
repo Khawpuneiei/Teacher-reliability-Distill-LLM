@@ -2007,3 +2007,10 @@ instance. The optional A100/vLLM path remains experimental.
   final frozen candidate will receive a fresh byte-bound suite receipt in the
   existing assurance unit before reviewer call 2. No sustained run, commit,
   or push has started.
+
+## 2026-10-02 — 12-hour mini study (`mini_12h`) complete
+
+- Owner downscaled the study to a 12-hour mini run. Profile `mini_12h`: 40 GSM8K, 21 MATH (3 per subject), 50 GSM-Plus (one per seed), full protocol (8 samples, 1,024-token cap, seed 42, NF4/FP16). No A100 import (importer is full-profile only).
+- Run `mini12h-rtx4060-20261001-230236`, started 2026-10-01 23:02 SGT, first pass ended 04:40 SGT with 109/111 (2 rows failed `InsufficientHostMemory` for the offloaded-KV-cache 2 GiB reserve). `--resume --retry-failed` completed both: **111/111, 0 failed, 0 pending**.
+- Measured throughput: about **19.4 rows/hour** (greedy 1 / sample 1, offloaded KV cache, GPU ~85 °C with thermal slowdown).
+- Report: `results/mini12h-rtx4060-20261001/` (recommendation status exploratory). Raw-run backup `mini12h-rtx4060-20261001-230236.tar.gz`, SHA-256 `06ed0976394cc485ee5425160fb08ea0ab59e28ce14e41a42d7bc599a4cd1014`; restore check reproduced the 111-line `predictions.jsonl` with identical SHA-256.
