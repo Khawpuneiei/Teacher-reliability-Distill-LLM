@@ -71,6 +71,13 @@ Create the teacher calibration report and check row accounting:
 Get-Content (Join-Path $RunDir 'summary.json') -Raw
 ```
 
+Export the per-question sample view (CSV, JSONL with full greedy solutions,
+and a readable `SAMPLE.md`):
+
+```powershell
+& $Python scripts\export_sample_rows.py --run-dir $RunDir --out-dir results\<run-name>
+```
+
 The 111-row report is exploratory. Its metrics do not identify a deployable
 teacher-confidence gate.
 

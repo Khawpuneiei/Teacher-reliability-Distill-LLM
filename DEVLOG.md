@@ -2089,3 +2089,13 @@ instance. The optional A100/vLLM path remains experimental.
 - Docs: README, plan, roadmap, checklist, runbook, experiment design, data
   contracts, and session report now describe only the mini scope. Entries
   above this one are historical.
+
+## 2026-10-02 — 111-row run published as a sample experiment
+
+- Added `scripts/export_sample_rows.py`, which turns a completed run into a
+  compact per-question view without token-level arrays.
+- Exported the 111-row run to `results/mini12h-rtx4060-20261001/`:
+  `sample_rows.csv` (44 KB), `sample_rows.jsonl` (226 KB, adds full greedy
+  solutions), and `SAMPLE.md` (overview, three worked examples, all 111 rows).
+- README now has a "Sample experiment" section with per-dataset accuracy,
+  best AUROC signal, and mean agreement for correct versus wrong answers.

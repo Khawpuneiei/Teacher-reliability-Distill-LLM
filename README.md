@@ -21,7 +21,34 @@ outputs and compares `base`, `kd_all`, `kd_gated`, and `kd_oracle` on the same
 GSM-Plus questions. The `kd_gated` condition uses only teacher self-consistency
 and does not use gold labels; `kd_oracle` is a gold-label reference condition.
 
-## Results
+## Sample experiment: the 111-question teacher run
+
+The committed run `mini12h-rtx4060-20261001-230236` is a complete worked
+example. Every question, with the teacher's greedy answer, eight sampled
+answers, and confidence scores, is in
+[`results/mini12h-rtx4060-20261001/SAMPLE.md`](results/mini12h-rtx4060-20261001/SAMPLE.md)
+(readable table and worked examples),
+[`sample_rows.csv`](results/mini12h-rtx4060-20261001/sample_rows.csv), and
+[`sample_rows.jsonl`](results/mini12h-rtx4060-20261001/sample_rows.jsonl)
+(adds the full greedy solutions).
+
+| Dataset | Questions | Greedy correct | Majority-vote correct | Best AUROC (signal) | Mean agreement: correct / wrong |
+| --- | ---: | ---: | ---: | --- | ---: |
+| GSM8K | 40 | 85.0% | 90.0% | 0.895 (self-consistency) | 0.97 / 0.54 |
+| MATH (3 per subject) | 21 | 71.4% | 81.0% | 0.950 (self-consistency) | 0.85 / 0.17 |
+| GSM-Plus | 50 (48 scorable) | 81.2% | 83.3% | 0.858 (sequence probability) | 0.97 / 0.60 |
+
+Agreement is the share of the eight samples whose answer matches the greedy
+answer; wrong greedy answers have much lower agreement. AUROC measures how
+well a confidence signal separates correct from wrong answers (1.0 is
+perfect). With 21–50 questions per dataset these numbers are indicative only.
+
+![MATH reliability diagram](results/mini12h-rtx4060-20261001/reliability_math.png)
+
+Regenerate the sample files from a run directory with
+`python scripts/export_sample_rows.py --run-dir <run> --out-dir <folder>`.
+
+## Distillation results
 
 | Condition | Overall accuracy | 95% paired-bootstrap interval vs. base |
 | --- | ---: | ---: |
