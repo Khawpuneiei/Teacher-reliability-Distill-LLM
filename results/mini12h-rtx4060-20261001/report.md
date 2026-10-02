@@ -1,5 +1,8 @@
 # Teacher reliability report
 
+This completed 111-row run is the teacher portion of the mini study. It
+remains exploratory for selecting a production confidence gate.
+
 - Run: `mini12h-rtx4060-20261001-230236`
 - Profile: `mini_12h`
 - Run status: `complete`
@@ -8,13 +11,13 @@
 - Pending rows: 0
 - Recommendation status: **exploratory**
 - Candidate signal: `none`
-- Reason: The mini_12h time-bounded subset is not the full benchmark; no full-study KD-gate recommendation is made.
+- Reason: The mini_12h subset (111 questions) is too small to justify a KD gate; metrics are descriptive only.
 
 The primary greedy analysis predicts greedy-answer correctness. Majority-vote correctness is a separate analysis.
 The paired_primary rows compare entropy and self-consistency on their shared eligible cohort; greedy rows also show per-signal coverage.
 Math-Verify timeout and worker-failure checks are recorded as unknown, not as false.
 The candidate ranking is descriptive; no confidence intervals or statistical-significance claims are produced.
-Smoke, pilot, and A100 time-bounded runs are exploratory and cannot justify a full-study KD gate.
+Smoke and mini_12h runs are exploratory and cannot justify a KD gate.
 
 ## Grading-check uncertainty
 

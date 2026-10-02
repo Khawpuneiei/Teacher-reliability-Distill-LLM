@@ -1,5 +1,9 @@
 # Mini distillation follow-up (2026-10-02)
 
+This four-condition, 640-question comparison is the student portion of the
+accepted mini-study scope; it is exploratory and does not establish a gate
+effect.
+
 Teacher data: run `mini12h-rtx4060-20261001-230236` (Qwen2.5-Math-7B-Instruct, 111 questions, greedy + 8 samples each).
 Student: `Qwen/Qwen2.5-0.5B` base (revision `060db6499f32faf8b98477b0a26969ef7d8b9987`), LoRA r=16 on all linear layers, 2 epochs, lr 2e-4, effective batch 16, seed 0.
 Evaluation: 640 held-out test questions (GSM8K 300, MATH 140 = 20 per subject, GSM-Plus 200 one per seed), disjoint from training questions and from any GSM8K/GSM-Plus seed question used in training. Greedy decoding, 512 new tokens, graded with the repository's Math-Verify grader on the first `\boxed{}` answer (same rule for every condition).

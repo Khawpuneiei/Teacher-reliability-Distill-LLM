@@ -36,13 +36,49 @@ sys.path.insert(0, str(REPO_ROOT))
 from teacher_reliability.answers import _matching_brace  # noqa: E402
 from teacher_reliability.data import _seed_question_id  # noqa: E402
 from teacher_reliability.grading import MathVerifyWorker, grade_prediction  # noqa: E402
-from teacher_reliability.run import _load_cached_examples  # noqa: E402
-from teacher_reliability.selection import get_profile  # noqa: E402
-from teacher_reliability.teacher import build_chat_messages  # noqa: E402
+from teacher_reliability.run import LOCAL_MODEL_REVISION, _load_cached_examples  # noqa: E402
+from teacher_reliability.selection import RunProfile  # noqa: E402
+from teacher_reliability.teacher import build_chat_messages, derive_sample_seed  # noqa: E402
 
 STUDENT = "Qwen/Qwen2.5-0.5B"
 STUDENT_REVISION = "060db6499f32faf8b98477b0a26969ef7d8b9987"
 CONDITIONS = ("base", "kd_all", "kd_gated", "kd_oracle")
+HELDOUT_POOL = RunProfile("heldout_pool", None, None, None, False, "test", 8, 1024)
+MINI_TEACHER_ROW_COUNT = 111
+MINI_TEACHER_SAMPLE_COUNT = 8
+MINI_TEACHER_SEED = 42
+MINI_TEACHER_MODEL_REPOSITORY = "Qwen/Qwen2.5-Math-7B-Instruct"
+MINI_TEACHER_DATASET_REVISIONS = {
+    "EleutherAI/hendrycks_math": "21a5633873b6a120296cce3e2df9d5550074f4a3",
+    "openai/gsm8k": "740312add88f781978c0658806c59bc2815b9866",
+    "qintongli/GSM-Plus": "3b708db57b96a16e8e3368ed2956990c0809440e",
+}
+MINI_TEACHER_ROW_REVISIONS = {
+    "gsm8k": MINI_TEACHER_DATASET_REVISIONS["openai/gsm8k"],
+    "math": MINI_TEACHER_DATASET_REVISIONS["EleutherAI/hendrycks_math"],
+    "gsm_plus": MINI_TEACHER_DATASET_REVISIONS["qintongli/GSM-Plus"],
+}
+MINI_TEACHER_PROFILE = {
+    "name": "mini_12h",
+    "gsm8k_limit": 40,
+    "math_per_subject": 3,
+    "gsm_plus_limit": 50,
+    "gsm_plus_one_per_seed": True,
+    "gsm_plus_split": "test",
+    "sample_count": MINI_TEACHER_SAMPLE_COUNT,
+    "max_new_tokens": 1024,
+    "target_hours": 12,
+}
+MINI_TEACHER_DATASET_COUNTS = {"gsm8k": 40, "math": 21, "gsm_plus": 50}
+MINI_MATH_SUBJECTS = {
+    "algebra",
+    "counting_and_probability",
+    "geometry",
+    "intermediate_algebra",
+    "number_theory",
+    "prealgebra",
+    "precalculus",
+}
 
 
 def _rank(example_id: str, seed: int) -> str:
@@ -58,13 +94,98 @@ def _seed_group(example) -> str | None:
 
 
 def load_training_rows(predictions_path: Path) -> list[dict]:
+    manifest_path = predictions_path.with_name("run_manifest.json")
+    if not manifest_path.is_file():
+        raise ValueError(f"mini teacher run is missing {manifest_path.name}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     rows = []
     with predictions_path.open(encoding="utf-8") as handle:
         for line in handle:
-            row = json.loads(line)
-            if row.get("status") == "complete":
-                rows.append(row)
+            if not line.strip():
+                raise ValueError("mini teacher predictions contain an empty line")
+            rows.append(json.loads(line))
+    _validate_mini_teacher_run(manifest, rows)
     return rows
+
+
+def _validate_mini_teacher_run(manifest: dict, rows: list[dict]) -> None:
+    """Reject teacher inputs that do not match the completed 111-row study."""
+    if manifest.get("status") != "complete":
+        raise ValueError("mini teacher run must have status 'complete'")
+    profile = manifest.get("profile")
+    if not isinstance(profile, dict) or any(
+        profile.get(key) != expected for key, expected in MINI_TEACHER_PROFILE.items()
+    ):
+        raise ValueError("mini distillation requires the exact mini_12h teacher profile")
+    if manifest.get("seed") != MINI_TEACHER_SEED:
+        raise ValueError("mini distillation requires teacher seed 42")
+    if manifest.get("model_repository") != MINI_TEACHER_MODEL_REPOSITORY:
+        raise ValueError("mini distillation requires Qwen2.5-Math-7B-Instruct teacher outputs")
+    if manifest.get("model_revision") != LOCAL_MODEL_REVISION:
+        raise ValueError("mini teacher model revision differs from the pinned run")
+    identity = manifest.get("identity")
+    if (
+        manifest.get("dataset_revisions") != MINI_TEACHER_DATASET_REVISIONS
+        or not isinstance(identity, dict)
+        or identity.get("datasets") != MINI_TEACHER_DATASET_REVISIONS
+    ):
+        raise ValueError("mini teacher dataset revisions do not match the pinned commits")
+
+    selected_ids = manifest.get("selected_example_ids")
+    if (
+        manifest.get("selected_example_count") != MINI_TEACHER_ROW_COUNT
+        or not isinstance(selected_ids, list)
+        or len(selected_ids) != MINI_TEACHER_ROW_COUNT
+        or len(set(selected_ids)) != MINI_TEACHER_ROW_COUNT
+        or manifest.get("completed_example_count") != MINI_TEACHER_ROW_COUNT
+        or manifest.get("failed_example_count") != 0
+        or manifest.get("pending_example_count") != 0
+        or manifest.get("imported_example_count") != 0
+    ):
+        raise ValueError("mini teacher manifest must account for 111 complete local rows")
+    if len(rows) != MINI_TEACHER_ROW_COUNT:
+        raise ValueError("mini teacher predictions must contain exactly 111 rows")
+    row_ids = [row.get("example_id") for row in rows]
+    if (
+        any(not isinstance(example_id, str) or not example_id for example_id in row_ids)
+        or len(set(row_ids)) != MINI_TEACHER_ROW_COUNT
+        or set(row_ids) != set(selected_ids)
+    ):
+        raise ValueError("mini teacher prediction IDs must match the unique selected IDs")
+
+    counts: dict[str, int] = defaultdict(int)
+    math_subject_counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        if row.get("status") != "complete":
+            raise ValueError("every mini teacher prediction must be complete")
+        source = row.get("source")
+        if not isinstance(source, dict) or source.get("dataset") not in MINI_TEACHER_DATASET_COUNTS:
+            raise ValueError("mini teacher prediction has an unsupported dataset")
+        dataset = source["dataset"]
+        if source.get("revision") != MINI_TEACHER_ROW_REVISIONS[dataset]:
+            raise ValueError("mini teacher row dataset revision differs from the pinned run")
+        counts[dataset] += 1
+        if dataset == "math":
+            math_subject_counts[source.get("config")] += 1
+        samples = row.get("samples")
+        if (
+            row.get("requested_sample_count") != MINI_TEACHER_SAMPLE_COUNT
+            or not isinstance(samples, list)
+            or len(samples) != MINI_TEACHER_SAMPLE_COUNT
+            or any(not isinstance(sample, dict) for sample in samples)
+            or [sample.get("index") for sample in samples] != list(range(MINI_TEACHER_SAMPLE_COUNT))
+        ):
+            raise ValueError("each mini teacher prediction must contain eight indexed seeded samples")
+        if any(
+            sample.get("seed") != derive_sample_seed(MINI_TEACHER_SEED, row["example_id"], index)
+            for index, sample in enumerate(samples)
+        ):
+            raise ValueError("mini teacher sample seeds do not match the run seed and sample indices")
+
+    if dict(counts) != MINI_TEACHER_DATASET_COUNTS:
+        raise ValueError("mini teacher dataset counts must be 40 GSM8K, 21 MATH, and 50 GSM-Plus")
+    if dict(math_subject_counts) != {subject: 3 for subject in MINI_MATH_SUBJECTS}:
+        raise ValueError("mini teacher run must contain three MATH rows for each of seven subjects")
 
 
 def build_training_sets(rows: list[dict], gate_threshold: float) -> dict[str, list[dict]]:
@@ -332,8 +453,8 @@ def main() -> int:
                  for name, items in sets.items()}
         log(f"training sets: {json.dumps(sizes)}")
 
-        # The full profile keeps every source row, giving the whole held-out pool.
-        examples, _ = _load_cached_examples(get_profile("full"), 42, manifest["dataset_revisions"])
+        # An uncapped pool profile keeps every source test row as held-out candidates.
+        examples, _ = _load_cached_examples(HELDOUT_POOL, 42, manifest["dataset_revisions"])
         training_ids = {row["example_id"] for row in rows}
         by_id = {e.example_id: e for e in examples}
         training_groups = {g for g in (_seed_group(by_id[i]) for i in training_ids if i in by_id) if g}

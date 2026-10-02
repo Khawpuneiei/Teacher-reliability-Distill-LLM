@@ -1,7 +1,7 @@
 import unittest
 
 from teacher_reliability.hub_data import MATH_CONFIGS, DATASET_REPOSITORIES, load_examples
-from teacher_reliability.selection import get_profile
+from teacher_reliability.selection import RunProfile, get_profile
 
 
 class HubDataLoadingTests(unittest.TestCase):
@@ -91,7 +91,7 @@ class HubDataLoadingTests(unittest.TestCase):
 
                 with self.assertRaisesRegex(ValueError, "empty.*" + empty_source[0]):
                     load_examples(
-                        get_profile("full"), seed=11,
+                        RunProfile("pool", None, None, None, False, "test", 8, 1024), seed=11,
                         revision_resolver=lambda _repository: "1" * 40,
                         dataset_loader=load_dataset,
                     )

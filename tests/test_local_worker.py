@@ -129,6 +129,7 @@ class LocalWorkerTests(unittest.TestCase):
                 num_attention_heads=28, hidden_size=3584,
             )),
             memory_probe=lambda: {"free_mib": 4096, "total_mib": 8192},
+            available_ram_bytes=lambda: 8 * 1024**3,
             greedy_generator=greedy, sample_generator=sample,
         )
         emitted = []

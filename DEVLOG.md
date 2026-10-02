@@ -2022,3 +2022,70 @@ instance. The optional A100/vLLM path remains experimental.
 - Fixes found during the smoke: loader returns only the profile selection (held-out pool now loads the `full` profile); base student never learned `<|im_end|>`, so training ends responses with `<|endoftext|>`, and every condition is graded on text through its first `\boxed{}`.
 - `kd_oracle` hit CUDA OOM in the first process after three conditions; a fresh-process resume with identical settings completed it.
 - Overall held-out accuracy: base 25.5%, kd_all 37.8%, kd_gated 38.8%, kd_oracle 37.0%. Gate − all = +0.9 pts, 95% CI [−2.0, +4.1]. See `results/mini-distill-20261002/report.md`.
+
+## 2026-10-02 — Owner sets the mini study as completion scope
+
+- The accepted project target is the completed 111-row `mini_12h` teacher run
+  plus the four-condition, 640-question student comparison. The 12,221-row
+  study and A100 import are optional follow-on work. README, roadmap, plan,
+  checklist, runbook, experiment design, data contract, session report, and
+  result reports now say so.
+- Added a preflight to `scripts/mini_distill.py`. It requires a completed
+  `mini_12h` manifest, seed 42, pinned teacher and dataset revisions, 111
+  unique selected/local rows with the expected 40/21/50 dataset split, and
+  eight indexed samples with their original derived seeds before any training.
+- `TDD_REQUIRED: yes`. Observable seam: `load_training_rows(predictions.jsonl)`
+  reads the adjacent manifest and prediction file before constructing student
+  training sets.
+- RED: the first focused run had **2 expected failures out of 3 tests**: a
+  full-profile teacher and a row missing a sample were both accepted. After
+  the core manifest/row guard was added, the new seed-integrity test failed
+  because a changed sample seed was accepted.
+- GREEN: after seed validation, the focused suite passed **5 tests**. REFACTOR:
+  profile, seed, row-count, and model constants were consolidated; focused
+  tests and `py_compile` passed again.
+- Extended the guard to the three pinned dataset revisions in both manifest
+  locations and in every prediction row. RED: two new alternate-revision tests
+  failed because the manifest and row pins were not checked. The first GREEN
+  rerun exposed a shared-dictionary mutation in the test fixture; after copying
+  fixture revision maps independently, all **7 focused tests** passed.
+- The guard accepted the real archived 111-row run. Independent output checks
+  found 640 unique evaluation rows per student condition, identical IDs across
+  all four conditions, and the expected 300/140/200 dataset mix.
+- Candidate-wide verification, adversarial review, final-strict review, push,
+  and remote SHA verification remain pending for this change.
+
+## 2026-10-02 — Mini study only: remove every 12,221-row setting
+
+- Owner direction: the repository should contain only the mini
+  teacher-reliability study and the mini distillation setting, with all
+  12,221-row settings deleted.
+- Profiles: only `smoke` (nine-row pipeline check) and `mini_12h` remain;
+  `full`, `pilot`, `a100_12h`, and `a100_24h` are removed.
+- Removed modules: `archive_import`, `local_benchmark` (qualification matrix),
+  `hybrid_run`, `vllm_worker`, `greedy_worker`, `model_artifact`; removed the
+  `vllm-hybrid` backend and the `--import-run-zip`, `--qualification-manifest`,
+  `--fast-start-unqualified`, `--model-dir`, and `--vllm-python` options;
+  removed `requirements-vllm.*`, `scripts/setup_vllm.sh`, and the A100 test
+  fixture ZIP. `run_local` no longer accepts imported rows or qualification
+  provenance; manifests keep empty `import`/`qualification` fields for schema
+  compatibility with the committed run.
+- `report.py`: removed full-study origin-count, A100 archive-provenance,
+  pinned-revision, and malformed-row validation; `mini_12h` and `smoke`
+  reports are exploratory.
+- `scripts/mini_distill.py`: the held-out pool now uses an uncapped local
+  `RunProfile` instead of the removed `full` profile.
+- Tests: deleted suites for removed modules and full-study cases; rewrote
+  `test_report` around `mini_12h`; replaced the A100 profile test with a
+  `mini_12h` 40/21/50 selection test; `test_local_worker` now injects host RAM
+  instead of reading the machine's free memory. Result: **161 tests pass**;
+  `compileall` passes.
+- Real-run check: the teacher report regenerated from a copy of
+  `mini12h-rtx4060-20261001-230236` reports `run_complete: true` with
+  `metrics.csv`, `metrics_by_execution.csv`, and `calibration_bins.csv`
+  byte-identical (ignoring line endings) to the committed files. The committed
+  `report.md`/`summary.json` were replaced with the regenerated text. The
+  distillation input guard accepts the real 111-row run.
+- Docs: README, plan, roadmap, checklist, runbook, experiment design, data
+  contracts, and session report now describe only the mini scope. Entries
+  above this one are historical.

@@ -1,5 +1,13 @@
 # Experiment design: when to trust the teacher
 
+## Current project scope
+
+The accepted deliverable is the local `mini_12h` teacher run (111 questions)
+and the separate student-distillation comparison on 640 held-out questions.
+This is an exploratory mini study.
+Profile definitions and row counts are recorded in the run manifest and in
+[`local-rtx4060-project-plan.md`](local-rtx4060-project-plan.md).
+
 ## Research questions
 
 - **When:** Does confidence from a math teacher predict whether its answer is
@@ -7,16 +15,18 @@
 - **What:** Which measured signal is the strongest, most stable candidate for
   filtering or weighting teacher examples before knowledge distillation?
 
-The experiment evaluates a teacher-side gate. It does not train a student or
-prove that a downstream KD run improves; that requires a later controlled KD
-ablation.
+The teacher portion tests whether confidence signals predict answer
+correctness. The repository also contains a separate mini KD ablation; it
+tests the effect of training conditions on held-out student accuracy. Keep
+those outcomes distinct: a confidence signal predicting teacher correctness
+does not by itself show that gating improves student training.
 
 ## Model and evaluation sets
 
-- Teacher: [`Qwen/Qwen2.5-Math-7B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-Math-7B-Instruct), inference only, loaded with 4-bit
-  quantization. Resolve the Hub `main` revision at run start and record its
-  commit SHA and quantization settings.
-  Resume reuses the manifest's commit rather than resolving `main` again.
+- Teacher: [`Qwen/Qwen2.5-Math-7B-Instruct`](https://huggingface.co/Qwen/Qwen2.5-Math-7B-Instruct), inference only, loaded with 4-bit NF4
+  double quantization and FP16 compute. The current mini run pins revision
+  `ef9926d75ab1d54532f6a30dd5e760355eb9aa4d`; the manifest records that commit
+  and the quantization settings. Resume reuses the manifest's commit.
 - GSM8K: `openai/gsm8k`, `main` configuration, `test` split (1,319 rows in the
   dataset card).
 - MATH: `EleutherAI/hendrycks_math`, `test` split across its seven subject
@@ -24,9 +34,9 @@ ablation.
   every included dataset row ID. The source benchmark contains multiple
   competition-math subjects and full worked solutions.
 - GSM-Plus: `qintongli/GSM-Plus`, current Hub `test` split. The current dataset
-  viewer exposes about 10,552 variations in that split. Smoke and pilot use
-  deterministic hash-selected rows from the same pinned split; the pilot takes
-  at most one variation per seed question. Preserve perturbation categories
+  viewer exposes about 10,552 variations in that split. The smoke and
+  `mini_12h` profiles use deterministic hash-selected rows from the same pinned
+  split and take at most one variation per seed question. Preserve perturbation categories
   and seed-question identity so related rows can be grouped. The older project
   `testmini` layout is not used by the current Hub loader.
 
@@ -35,24 +45,23 @@ are retained in coverage diagnostics but marked unscorable for answer
 correctness; they are never silently labeled wrong or dropped without a
 count.
 
-### Time-bounded A100 subsets
+### Current local `mini_12h` subset
 
-`a100_12h` selects 150 GSM8K rows, all 350 MATH rows (50 per subject), and 220
-GSM-Plus rows from distinct seed questions. `a100_24h` uses 300, 350, and 790
-rows respectively. With a fixed seed, both selections are deterministic, and
-the smaller is contained in the larger. Both retain the greedy completion,
-eight samples at temperature 0.7, and the 1,024-token cap. All sources load at
-immutable revisions, while their selected row counts remain below `full`.
+The current run selects 40 GSM8K questions, 3 questions from each of the 7
+MATH subjects (21 total), and 50 GSM-Plus variations from distinct seed
+questions. Seed 42 fixes the deterministic selection. It preserves the full
+teacher protocol: one greedy response, eight independently seeded samples at
+temperature 0.7, and a 1,024-token output cap. The run completed 111/111 rows
+on the local RTX 4060.
 
-These names describe approximate runtime targets, not enforced deadlines. The
-planning baseline is the local nine-row smoke: 27 generations completed in
-673 seconds. Assuming fourfold A100 generation throughput estimates about
-11.2 and 22.4 hours of inference. No A100 timing has been measured yet; host
-load, downloads, A100 variant, token lengths, and kernel performance affect
-actual elapsed time. The run manifest records target hours, GPU model/memory,
-selected IDs, and actual times. These smaller profiles report exploratory
-metrics only; a complete `full` profile remains necessary for a candidate
-KD-gating recommendation.
+The follow-up trains `Qwen/Qwen2.5-0.5B` under `kd_all`, `kd_gated`, and
+`kd_oracle`, and compares all three with the untrained `base` model. The 640
+held-out questions are 300 GSM8K, 140 MATH (20 per subject), and 200 GSM-Plus.
+Evaluation examples and shared GSM8K/GSM-Plus seed-question groups used for
+teacher training are excluded. The label-free self-consistency gate requires
+majority share at least 0.75; the oracle condition uses gold labels only as a
+reference. See the [student results](../results/mini-distill-20261002/report.md)
+and [runbook](runbook.md).
 
 ## Per-example protocol
 
@@ -142,16 +151,11 @@ math-equivalence rule.
 
 ## Recommendation rule and limitations
 
-Only a complete `full` profile can receive a candidate-gate recommendation.
-Smoke, pilot, and time-bounded A100 reports are explicitly exploratory. For the full profile, the
-report ranks confidence signals that cover every scorable row in every dataset
-by macro AUROC against greedy correctness, then uses macro ECE as a tie-breaker.
-Per-signal metrics and reliability diagrams retain each signal's eligible
-rows and report coverage; a signal with missing scores remains descriptive and
-cannot win a gate recommendation by omitting difficult rows. It names a candidate KD gate
-only when all requested datasets have defined AUROC and the leading signal is
-not below chance on any dataset. Otherwise it says the evidence is mixed or
-insufficient. A low-confidence cutoff for a later KD experiment must be chosen
+The `mini_12h` and smoke reports are exploratory and do not recommend a
+production teacher gate. The report still computes per-dataset AUROC and ECE
+for every confidence signal, macro averages across datasets, and per-signal
+coverage; a signal with missing scores remains descriptive and is flagged as
+ineligible rather than winning by omitting difficult rows. A low-confidence cutoff for a later KD experiment must be chosen
 on a separate calibration/validation split, not on the final evaluation sets.
 
 The report also applies a prespecified coverage gate before it names any

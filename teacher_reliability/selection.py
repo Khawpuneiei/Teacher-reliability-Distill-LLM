@@ -59,25 +59,14 @@ class RunProfile:
 
 
 PROFILES = {
+    # Nine-row pipeline check (two samples) before the mini study.
     "smoke": RunProfile(
         "smoke", 1, 1, 1, True, "test", 2, 1024
     ),
-    "pilot": RunProfile(
-        "pilot", 50, 8, 100, True, "test", 8, 512
-    ),
-    "full": RunProfile(
-        "full", None, 50, None, False, "test", 8, 1024
-    ),
-    # Local RTX 4060 mini study: full protocol (8 samples, 1,024 tokens) on
-    # 111 rows, sized from measured batch-one rates to finish within 12 hours.
+    # Mini study: full per-question protocol (8 samples, 1,024 tokens) on
+    # 111 rows, sized from measured RTX 4060 batch-one rates to fit 12 hours.
     "mini_12h": RunProfile(
         "mini_12h", 40, 3, 50, True, "test", 8, 1024, target_hours=12
-    ),
-    "a100_12h": RunProfile(
-        "a100_12h", 150, 50, 220, True, "test", 8, 1024, target_hours=12
-    ),
-    "a100_24h": RunProfile(
-        "a100_24h", 300, 50, 790, True, "test", 8, 1024, target_hours=24
     ),
 }
 
@@ -104,9 +93,9 @@ def select_examples(
 ) -> list[Example]:
     """Select deterministic, capped rows without depending on source order.
 
-    MATH caps are applied independently within each subject/configuration. For
-    smoke, pilot, and time-bounded A100 runs choose one ranked GSM-Plus row
-    per seed question before applying their overall cap; full keeps variations.
+    MATH caps are applied independently within each subject/configuration.
+    When ``gsm_plus_one_per_seed`` is set, one ranked GSM-Plus row is kept per
+    seed question before the overall cap is applied.
     """
     rows = list(examples)
     identifiers = [row.example_id for row in rows]

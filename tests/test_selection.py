@@ -58,7 +58,7 @@ class StableSelectionTests(unittest.TestCase):
             {"math:algebra:test:2", "math:geometry:test:0"},
         )
 
-    def test_gsm_plus_pilot_avoids_duplicate_seed_questions(self):
+    def test_gsm_plus_selection_avoids_duplicate_seed_questions(self):
         selected = select_examples(self.rows, self.profile, seed=42)
         gsm_plus = [row for row in selected if row.dataset == "gsm_plus"]
 
@@ -91,60 +91,39 @@ class StableSelectionTests(unittest.TestCase):
         self.assertEqual(smoke.sample_count, 2)
         self.assertGreaterEqual(smoke.max_new_tokens, 1024)
 
-    def test_a100_time_budget_profiles_bound_deterministic_representative_workload(self):
-        twelve_hour = PROFILES.get("a100_12h")
-        twenty_four_hour = PROFILES.get("a100_24h")
-        self.assertIsNotNone(twelve_hour, "a100_12h profile is required")
-        self.assertIsNotNone(twenty_four_hour, "a100_24h profile is required")
-        if twelve_hour is None or twenty_four_hour is None:
-            return
-
+    def test_mini_profile_selects_the_111_row_study_mix(self):
+        mini = PROFILES.get("mini_12h")
+        self.assertIsNotNone(mini, "mini_12h profile is required")
+        self.assertEqual(set(PROFILES), {"smoke", "mini_12h"})
         self.assertEqual(
-            (twelve_hour.target_hours, twelve_hour.gsm8k_limit,
-             twelve_hour.math_per_subject, twelve_hour.gsm_plus_limit,
-             twelve_hour.sample_count),
-            (12, 150, 50, 220, 8),
+            (mini.target_hours, mini.gsm8k_limit, mini.math_per_subject,
+             mini.gsm_plus_limit, mini.sample_count, mini.max_new_tokens),
+            (12, 40, 3, 50, 8, 1024),
         )
-        self.assertEqual(
-            (twenty_four_hour.target_hours, twenty_four_hour.gsm8k_limit,
-             twenty_four_hour.math_per_subject, twenty_four_hour.gsm_plus_limit,
-             twenty_four_hour.sample_count),
-            (24, 300, 50, 790, 8),
-        )
-        self.assertEqual(twelve_hour.as_dict()["target_hours"], 12)
-        self.assertEqual(twenty_four_hour.as_dict()["target_hours"], 24)
-        self.assertTrue(twelve_hour.gsm_plus_one_per_seed)
-        self.assertTrue(twenty_four_hour.gsm_plus_one_per_seed)
+        self.assertTrue(mini.gsm_plus_one_per_seed)
 
         subjects = (
             "algebra", "counting_and_probability", "geometry",
             "intermediate_algebra", "number_theory", "prealgebra", "precalculus",
         )
         rows = (
-            [example("gsm8k", "main", index) for index in range(300)]
-            + [example("math", subject, index) for subject in subjects for index in range(50)]
-            + [example("gsm_plus", "default", index, f"seed-{index}")
-               for index in range(790)]
+            [example("gsm8k", "main", index) for index in range(100)]
+            + [example("math", subject, index) for subject in subjects for index in range(10)]
+            + [example("gsm_plus", "default", index, f"seed-{index % 80}")
+               for index in range(160)]
         )
-        selected_12 = select_examples(rows, twelve_hour, seed=42)
-        selected_24 = select_examples(rows, twenty_four_hour, seed=42)
-        counts_12 = {dataset: sum(row.dataset == dataset for row in selected_12)
-                     for dataset in ("gsm8k", "math", "gsm_plus")}
-        counts_24 = {dataset: sum(row.dataset == dataset for row in selected_24)
-                     for dataset in ("gsm8k", "math", "gsm_plus")}
-        self.assertEqual(counts_12, {"gsm8k": 150, "math": 350, "gsm_plus": 220})
-        self.assertEqual(counts_24, {"gsm8k": 300, "math": 350, "gsm_plus": 790})
+        selected = select_examples(rows, mini, seed=42)
+        counts = {dataset: sum(row.dataset == dataset for row in selected)
+                  for dataset in ("gsm8k", "math", "gsm_plus")}
+        self.assertEqual(counts, {"gsm8k": 40, "math": 21, "gsm_plus": 50})
         self.assertEqual(
-            {subject: sum(row.source_config == subject for row in selected_12 if row.dataset == "math")
+            {subject: sum(row.source_config == subject for row in selected if row.dataset == "math")
              for subject in subjects},
-            {subject: 50 for subject in subjects},
+            {subject: 3 for subject in subjects},
         )
-        self.assertEqual((1 + twelve_hour.sample_count) * len(selected_12), 6_480)
-        self.assertEqual((1 + twenty_four_hour.sample_count) * len(selected_24), 12_960)
-        self.assertTrue({row.example_id for row in selected_12}.issubset(
-            {row.example_id for row in selected_24}
-        ))
-
+        plus_seeds = [row.seed_question_id for row in selected if row.dataset == "gsm_plus"]
+        self.assertEqual(len(plus_seeds), len(set(plus_seeds)))
+        self.assertEqual(select_examples(list(reversed(rows)), mini, seed=42), selected)
 
 if __name__ == "__main__":
     unittest.main()

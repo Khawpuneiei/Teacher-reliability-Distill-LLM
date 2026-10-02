@@ -23,9 +23,12 @@ Every normalized benchmark row has:
 Dataset IDs are source/config/split/row based, not hashes of normalized text.
 The loaders resolve one immutable commit SHA per dataset repository, then pass
 that SHA to every `load_dataset` call. MATH quotas are independently applied
-within each subject. The smoke/pilot GSM-Plus cap chooses at most one
-hash-ranked row per seed question; the full profile retains the current Hub
-`test` split in full.
+within each subject. The smoke and `mini_12h` GSM-Plus caps choose at most one
+hash-ranked row per seed question.
+The accepted mini run selects 40 GSM8K rows, three rows from each of the seven
+MATH subjects, and 50 GSM-Plus rows from distinct seed questions. Its run
+manifest records the pinned revisions, selected IDs, exact profile, seed, and
+execution hardware.
 Before computing correctness, the dataset adapter must confirm that the
 problem, reference answer, source ID, and split are present and non-empty,
 except that GSM-Plus's documented unanswerable cases may have a null gold
@@ -78,13 +81,13 @@ and duplicate IDs or altered input content are rejected.
 
 ## Generated outputs
 
-Reports include `predictions.jsonl`, `metrics.csv`, `calibration_bins.csv`,
-`reliability_<dataset>.png`, `summary.json`, `report.md`, and the run manifest.
-All generated files live under ignored `outputs/`; Hugging Face caches live in
-the configured cache directory outside the repository. Never commit raw
-benchmark rows, cached model files, generated solutions, or report artifacts.
-Keep licenses and citations in the documentation; follow each dataset's own
-terms.
+Teacher run outputs include `predictions.jsonl`, `metrics.csv`,
+`calibration_bins.csv`, `reliability_<dataset>.png`, `summary.json`,
+`report.md`, and the run manifest. Runtime checkpoints and teacher generations
+live under `%LOCALAPPDATA%\TeacherReliability\runs`, outside the repository.
+Curated mini-study summaries and the four student evaluation JSONL files are
+committed under `results/`; model weights and dataset caches are not. Keep
+licenses and citations in the documentation and follow each dataset's terms.
 
 ## Sources and licensing notes
 
@@ -99,7 +102,7 @@ terms.
   `question`, `solution`, `answer`, perturbation type, and seed-example fields.
   The dataset card lists CC BY-SA 4.0. The official project recommends its v1
   data over v0. The current Hub view exposes one `test` split; this project
-  selects deterministic pilot rows from that split rather than relying on the
+  selects deterministic mini-study rows from that split rather than relying on the
   older `testmini` layout.
 - [Qwen2.5-Math-7B-Instruct](https://huggingface.co/Qwen/Qwen2.5-Math-7B-Instruct)
   is an Apache-2.0 model card. Review the model license and dataset-specific

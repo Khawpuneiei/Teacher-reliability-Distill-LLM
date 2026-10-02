@@ -136,7 +136,7 @@
     }
   },
   "completed_count": 111,
-  "created_at": "2026-10-01T20:45:46+00:00",
+  "created_at": "2026-10-02T11:08:38+00:00",
   "execution_label": "RTX 4060 local",
   "failed_count": 0,
   "macro": {
@@ -493,16 +493,11 @@
       "minimum_dataset_auroc": 0.7892156862745098
     }
   },
-  "malformed_row_count": 0,
-  "malformed_rows": [],
   "missing_datasets": [],
-  "origin_count_validation": null,
-  "origin_provenance_validation": null,
   "pending_count": 0,
   "profile": "mini_12h",
-  "qualification": null,
   "recommendation": {
-    "reason": "The mini_12h time-bounded subset is not the full benchmark; no full-study KD-gate recommendation is made.",
+    "reason": "The mini_12h subset (111 questions) is too small to justify a KD gate; metrics are descriptive only.",
     "signal": null,
     "status": "exploratory"
   },
@@ -596,10 +591,8 @@
     "gsm_plus",
     "math"
   ],
-  "revision_validation": null,
   "run_complete": true,
   "run_id": "mini12h-rtx4060-20261001-230236",
   "run_status": "complete",
-  "selected_count": 111,
-  "unknown_count_validation": null
+  "selected_count": 111
 }

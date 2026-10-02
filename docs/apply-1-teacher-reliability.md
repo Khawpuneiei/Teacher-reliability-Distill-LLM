@@ -1,5 +1,10 @@
 # Apply 1 — Teacher Reliability & Calibration ("When to trust the teacher")
 
+> This file preserves the original assignment brief as provenance. The
+> implemented completion scope is the local 111-row teacher run plus the
+> 640-question student comparison described in
+> [`project-roadmap.md`](project-roadmap.md).
+
 ## Goal
 Test if teacher confidence predicts correctness on math.
 

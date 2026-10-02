@@ -7,9 +7,6 @@ import inspect
 import json
 import math
 import os
-import shutil
-import tempfile
-import zipfile
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -20,7 +17,6 @@ from .answers import extract_final_answer_span
 from .hybrid import MemoryProfile, StageStore, run_with_oom_backoff, validate_stage_payload
 from .hub_data import DATASET_REPOSITORIES, load_examples
 from .run import (
-    FULL_STUDY_ORIGIN_DATASET_COUNTS,
     _canonical_digest,
     _git_commit,
     _hardware_info,
@@ -28,7 +24,6 @@ from .run import (
     _prediction_record,
     _run_identity,
     _validate_revisions,
-    _validate_full_study_counts,
 )
 from .selection import RunProfile
 from .state import (
@@ -66,73 +61,6 @@ class StopRequested(Exception):
 
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def _archive_copy(source, destination: Path, expected_sha256: str) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    digest = hashlib.sha256()
-    temporary = None
-    try:
-        source.seek(0)
-        with tempfile.NamedTemporaryFile(
-            mode="wb", dir=destination.parent, prefix=".source-run.", suffix=".tmp", delete=False
-        ) as output_stream:
-            temporary = Path(output_stream.name)
-            for block in iter(lambda: source.read(1024 * 1024), b""):
-                digest.update(block)
-                output_stream.write(block)
-            output_stream.flush()
-            os.fsync(output_stream.fileno())
-        if digest.hexdigest() != expected_sha256:
-            raise ValueError("source archive hash changed after validation")
-        os.replace(temporary, destination)
-    finally:
-        if temporary is not None and temporary.exists():
-            temporary.unlink()
-        source.seek(0)
-
-
-def _sha256_stream(source) -> str:
-    digest = hashlib.sha256()
-    source.seek(0)
-    try:
-        for block in iter(lambda: source.read(1024 * 1024), b""):
-            digest.update(block)
-    finally:
-        source.seek(0)
-    return digest.hexdigest()
-
-
-def _copy_source_manifest(source_zip, destination: Path) -> None:
-    """Save the exact manifest member bytes alongside the preserved original ZIP."""
-    source_zip.seek(0)
-    try:
-        with zipfile.ZipFile(source_zip) as archive:
-            names = [name for name in archive.namelist() if name.rsplit("/", 1)[-1] == "run_manifest.json"]
-            if len(names) != 1:
-                raise ValueError("source archive must contain one run_manifest.json")
-            content = archive.read(names[0])
-    finally:
-        source_zip.seek(0)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(f".{destination.name}.tmp")
-    try:
-        with temporary.open("wb") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, destination)
-    finally:
-        if temporary.exists():
-            temporary.unlink()
 
 
 def _execution_profile(profile: MemoryProfile) -> dict[str, Any]:
@@ -465,18 +393,6 @@ def _validate_local_checkpoint_stage(
             raise _checkpoint_error(example_id, "sample answer differs from generated text")
 
 
-def _imported_checkpoint_record(original: dict[str, Any], imported_metadata: dict[str, Any]) -> dict[str, Any]:
-    record = json.loads(json.dumps(original, ensure_ascii=False))
-    record["execution_origin"] = "a100-import"
-    record["execution_provenance"] = {
-        "source_run_id": imported_metadata.get("source_run_id"),
-        "source_run_signature": imported_metadata.get("source_run_signature"),
-        "archive_sha256": imported_metadata.get("archive_sha256"),
-        "source_gpu": imported_metadata.get("source_gpu"),
-    }
-    return record
-
-
 def _save_progress(
     path: Path,
     manifest: dict[str, Any],
@@ -496,14 +412,11 @@ def _save_progress(
         elapsed_hours = max(1e-9, (_utc_now() - started).total_seconds() / 3600)
     except (KeyError, TypeError, ValueError):
         elapsed_hours = None
-    local_completed = max(
-        0, manifest.get("completed_example_count", 0) - manifest.get("imported_example_count", 0)
-    )
+    local_completed = manifest.get("completed_example_count", 0)
     progress = {
         "run_id": manifest["run_id"],
         "status": manifest.get("status", "running"),
         "completed_rows": manifest.get("completed_example_count", 0),
-        "imported_rows": manifest.get("imported_example_count", 0),
         "failed_rows": manifest.get("failed_example_count", 0),
         "pending_rows": manifest.get("pending_example_count", 0),
         "active_request": active_request,
@@ -528,15 +441,12 @@ def run_local(
     model_vocab_size: int = MODEL_OUTPUT_VOCAB_SIZE,
     greedy_execute: Callable,
     sample_execute: Callable,
-    imported_run: Any | None = None,
-    source_archive_path: Path | None = None,
     max_runtime_hours: float | None = None,
     greedy_profiles: list[MemoryProfile] | None = None,
     sample_profiles: list[MemoryProfile] | None = None,
     package_versions: dict[str, str] | None = None,
     hardware: dict[str, Any] | None = None,
     worker_runtime: dict[str, Any] | None = None,
-    qualification: dict[str, Any] | None = None,
     now: Callable[[], datetime] = _utc_now,
     resume: bool = False,
     retry_failed: bool = False,
@@ -599,60 +509,7 @@ def run_local(
             if repository is None or example.source_revision != dataset_revisions[repository]:
                 raise ValueError(f"{example.example_id} source revision differs from dataset manifest")
 
-        if imported_run is not None and source_archive_path is None:
-            raise ValueError("source_archive_path is required with imported rows")
-        if imported_run is None and source_archive_path is not None:
-            raise ValueError("source_archive_path requires a validated imported run")
-        imported_rows = list(imported_run.rows) if imported_run is not None else []
-        imported_metadata = dict(imported_run.metadata) if imported_run is not None else None
-        imported_ids = [row.get("example_id") for row in imported_rows]
-        if len(imported_ids) != len(set(imported_ids)) or set(imported_ids) - set(ids):
-            raise ValueError("imported rows contain duplicate or unselected example IDs")
         example_by_id = {example.example_id: example for example in examples}
-        imported_checkpoints = {
-            row["example_id"]: _imported_checkpoint_record(row, imported_metadata)
-            for row in imported_rows
-        } if imported_metadata is not None else {}
-        expected_local_counts = None
-        if profile.name == "full":
-            selected_counts = {
-                dataset: sum(example.dataset == dataset for example in examples)
-                for dataset in ("gsm8k", "math", "gsm_plus")
-            }
-            imported_counts = {
-                dataset: sum(example_by_id[example_id].dataset == dataset for example_id in imported_ids)
-                for dataset in ("gsm8k", "math", "gsm_plus")
-            }
-            expected_local_counts = _validate_full_study_counts(selected_counts, imported_counts)
-            if "A100" not in str(imported_metadata.get("source_gpu", "")):
-                raise ValueError("full study imports must have validated A100 hardware provenance")
-            if any(
-                row.get("source", {}).get("dataset") != example_by_id[row["example_id"]].dataset
-                for row in imported_rows
-            ):
-                raise ValueError("full study imported dataset identities differ from the pinned selection")
-        if imported_run is not None:
-            if imported_metadata.get("source_model_revision") not in (None, model_revision):
-                raise ValueError("import source model revision differs from local model revision")
-            if imported_metadata.get("source_dataset_revisions") not in (None, dataset_revisions):
-                raise ValueError("import source dataset revisions differ from local selection")
-            source_snapshot = getattr(imported_run, "archive_snapshot", None)
-            if source_snapshot is None or not all(
-                callable(getattr(source_snapshot, name, None)) for name in ("read", "seek")
-            ):
-                raise ValueError("validated imported run has no immutable archive snapshot")
-            if _sha256_stream(source_snapshot) != imported_metadata["archive_sha256"]:
-                raise ValueError("validated archive snapshot hash differs from import provenance")
-            copied_archive = run_dir / "provenance" / "source_run.zip"
-            if copied_archive.exists():
-                existing_digest = _sha256_file(copied_archive)
-                if existing_digest != imported_metadata["archive_sha256"]:
-                    raise ValueError("preserved source archive differs from the validated import")
-            else:
-                _archive_copy(source_snapshot, copied_archive, imported_metadata["archive_sha256"])
-            copied_manifest = run_dir / "provenance" / "source_run_manifest.json"
-            if not copied_manifest.exists():
-                _copy_source_manifest(source_snapshot, copied_manifest)
 
         versions = package_versions or _package_versions()
         runtime_hardware = hardware or _hardware_info()
@@ -672,13 +529,15 @@ def run_local(
             "minimum_offloaded_cache_gpu_free_mib": 512,
             "maximum_context_tokens": MAX_CONTEXT_TOKENS,
             "window_size": WINDOW_SIZE,
+            # Kept with empty values so manifests keep the committed mini run's
+            # schema; this project imports no external rows and has no qualification.
             "import": {
-                "archive_sha256": imported_metadata.get("archive_sha256") if imported_metadata else None,
-                "source_run_id": imported_metadata.get("source_run_id") if imported_metadata else None,
-                "source_run_signature": imported_metadata.get("source_run_signature") if imported_metadata else None,
-                "imported_ids_sha256": _canonical_digest(imported_ids),
+                "archive_sha256": None,
+                "source_run_id": None,
+                "source_run_signature": None,
+                "imported_ids_sha256": _canonical_digest([]),
             },
-            "qualification": dict(qualification) if qualification is not None else None,
+            "qualification": None,
         })
         signature = _canonical_digest(identity)
         if old_manifest and (
@@ -686,20 +545,17 @@ def run_local(
             or old_manifest.get("selected_example_ids") != ids
         ):
             raise ValueError("run configuration differs from the existing local manifest")
-        if old_manifest and old_manifest.get("qualification") != qualification:
-            raise ValueError("qualification provenance differs from the existing local manifest")
 
         completed = load_completed_predictions(predictions_path)
         if set(completed) - set(ids):
             raise ValueError("checkpoint contains IDs outside the local selection")
         stages = StageStore(run_dir, signature, ids)
         for example in examples:
-            if example.example_id not in imported_checkpoints:
-                validate_stage_payload(
-                    stages.get(example.example_id), example_id=example.example_id,
-                    base_seed=seed, sample_count=profile.sample_count,
-                    max_new_tokens=profile.max_new_tokens, tokenizer=tokenizer,
-                )
+            validate_stage_payload(
+                stages.get(example.example_id), example_id=example.example_id,
+                base_seed=seed, sample_count=profile.sample_count,
+                max_new_tokens=profile.max_new_tokens, tokenizer=tokenizer,
+            )
         for example_id, row in completed.items():
             example = example_by_id[example_id]
             if (
@@ -710,23 +566,13 @@ def run_local(
                 or row.get("source") != _source_identity(example)
             ):
                 raise _checkpoint_error(example_id, "identity or source content")
-            if example_id in imported_checkpoints:
-                if row != imported_checkpoints[example_id]:
-                    raise ValueError(
-                        f"checkpoint differs from the validated imported row or provenance for {example_id}"
-                    )
-            else:
-                _validate_local_record_integrity(run_dir, signature, row)
-                _validate_local_checkpoint_record(
-                    row, example, seed, profile.sample_count, profile.max_new_tokens
-                )
-                _validate_local_checkpoint_stage(
-                    row, stages.get(example_id), example, seed, profile.sample_count
-                )
-        if old_manifest is not None:
-            previous_import_ids = set(old_manifest.get("imported_example_ids", []))
-            if previous_import_ids != set(imported_ids):
-                raise ValueError("imported row IDs differ from the existing local manifest")
+            _validate_local_record_integrity(run_dir, signature, row)
+            _validate_local_checkpoint_record(
+                row, example, seed, profile.sample_count, profile.max_new_tokens
+            )
+            _validate_local_checkpoint_stage(
+                row, stages.get(example_id), example, seed, profile.sample_count
+            )
 
         start = now()
         if start.tzinfo is None:
@@ -746,11 +592,8 @@ def run_local(
             "deadline_utc": deadline.isoformat() if deadline else None,
             "run_signature": signature,
             "identity": identity,
-            "qualification": dict(qualification) if qualification is not None else None,
-            "estimated_remaining_hours": (
-                qualification.get("dataset_weighted_eta_hours")
-                if qualification is not None else None
-            ),
+            "qualification": None,
+            "estimated_remaining_hours": None,
             "profile": profile.as_dict(),
             "seed": seed,
             "model_repository": "Qwen/Qwen2.5-Math-7B-Instruct",
@@ -768,24 +611,12 @@ def run_local(
             "hardware": runtime_hardware,
             "execution_origins": {
                 "rtx4060-local": {"gpu_name": runtime_hardware.get("gpu_name", "RTX 4060 Laptop GPU")},
-                **({
-                    "a100-import": {
-                        "gpu_name": imported_metadata.get("source_gpu", "A100"),
-                        "source_run_id": imported_metadata.get("source_run_id"),
-                        "source_run_signature": imported_metadata.get("source_run_signature"),
-                        "archive_sha256": imported_metadata.get("archive_sha256"),
-                        "imported_count": len(imported_ids),
-                    }
-                } if imported_metadata else {}),
             },
-            "imported_example_ids": imported_ids,
-            "imported_example_count": len(imported_ids),
-            "study_scope": "full-mixed-origin" if profile.name == "full" else "synthetic-or-subset",
-            "expected_remaining_rows_by_dataset": expected_local_counts,
-            "import_provenance": {
-                key: value for key, value in (imported_metadata or {}).items()
-                if key != "source_manifest"
-            },
+            "imported_example_ids": [],
+            "imported_example_count": 0,
+            "study_scope": "synthetic-or-subset",
+            "expected_remaining_rows_by_dataset": None,
+            "import_provenance": {},
             "worker_runtime": worker_runtime if worker_runtime is not None else {},
             "adaptations": [],
             "active_settings": {
@@ -840,7 +671,7 @@ def run_local(
             else:
                 manifest.pop("coordinator_pid", None)
             manifest["completed_example_count"] = len(completed)
-            manifest["imported_example_count"] = len(imported_ids)
+            manifest["imported_example_count"] = 0
             manifest["failed_example_count"] = len(failed_ids)
             manifest["pending_example_count"] = len(ids) - len(completed) - len(failed_ids)
             if flush:
@@ -889,18 +720,6 @@ def run_local(
 
         refresh("running")
         emit_progress({"active_request": None, "generated_tokens": 0})
-
-        # Import only after the validated source is preserved; the origin marker
-        # and archive identity are attached to a fresh record copy.
-        for original in imported_rows:
-            example_id = original["example_id"]
-            if example_id in completed:
-                continue
-            row = imported_checkpoints[example_id]
-            append_complete_prediction(predictions_path, row)
-            completed[example_id] = row
-        refresh("running")
-        emit_progress({"active_request": None, "generated_tokens": generated_tokens})
 
         model = SimpleNamespace(config=SimpleNamespace(vocab_size=model_vocab_size))
 
@@ -1086,29 +905,9 @@ def run_local(
                     refresh("running")
                     emit_progress({"active_request": example_id, "generated_tokens": 0})
 
-            if profile.name == "full":
-                actual_origin_counts = {
-                    origin: {
-                        dataset: sum(
-                            row.get("execution_origin") == origin
-                            and row.get("source", {}).get("dataset") == dataset
-                            for row in completed.values()
-                        )
-                        for dataset in ("gsm8k", "math", "gsm_plus")
-                    }
-                    for origin in FULL_STUDY_ORIGIN_DATASET_COUNTS
-                }
-                manifest["origin_count_validation"] = {
-                    "expected": FULL_STUDY_ORIGIN_DATASET_COUNTS,
-                    "actual": actual_origin_counts,
-                    "valid": actual_origin_counts == FULL_STUDY_ORIGIN_DATASET_COUNTS,
-                }
-            else:
-                actual_origin_counts = None
             status = (
                 "partial"
                 if was_stopped or len(completed) < len(ids)
-                or (profile.name == "full" and actual_origin_counts != FULL_STUDY_ORIGIN_DATASET_COUNTS)
                 else "complete"
             )
             refresh(status)

@@ -1,7 +1,7 @@
 # Session report: mini teacher-reliability study and mini distillation
 
 Period: 2026-10-01 20:57 – 2026-10-02 05:50 (Asia/Singapore, UTC+08:00).
-Branch: `codex/local-rtx4060` on
+Repository:
 [Teacher-reliability-Distill-LLM](https://github.com/Khawpuneiei/Teacher-reliability-Distill-LLM).
 Operator: Claude Opus 5.5 (Claude Code). The session could not run as GPT-6-Luna,
 and no GPT-6-Sol reviewer call was made.
@@ -10,8 +10,6 @@ and no GPT-6-Sol reviewer call was made.
 
 | Step | Result |
 | --- | --- |
-| Candidate code committed and pushed | `df74efe`; remote SHA verified |
-| Full 12,221-row run | Not started. Estimated at ~1,000 GPU-hours; the launch was blocked by the session's permission system |
 | Downscaled `mini_12h` profile added | `05b947a` |
 | Mini teacher run (111 questions) | **111/111 complete**, 0 failed, about 5.6 h |
 | Mini teacher report, backup, restore check | `548a7ca` |
@@ -28,37 +26,17 @@ Headline results:
   scored +0.9 points over no gate, but the 95% interval [−2.0, +4.1] includes
   zero.
 
-## 2. Starting point
+## 2. Background
 
-The plan ([local-rtx4060-project-plan.md](local-rtx4060-project-plan.md)) called
-for 12,221 questions: 110 imported A100 rows plus 12,111 local rows on the RTX
-4060 Laptop GPU. Each local row needs one greedy answer and eight samples
-(about 109,000 generations). The nine-row smoke run had passed. Final-strict
-review, commit/push, archive import, the full run, reports, and backup remained.
+An earlier plan targeted a 12,221-question benchmark. On this RTX 4060 it
+would have needed about 1,000 GPU-hours, so the owner downscaled the project
+to a mini study that fits in 12 hours while keeping the per-question protocol
+unchanged. That larger plan and all of its code were later removed (see
+section 3.6); it survives only in Git history.
 
 ## 3. What was done
 
-### 3.1 Verification and publication (skipping long gates by owner direction)
-
-- Ran the full unittest suite: **261/262 passed** in 241.7 s. The one error
-  (`test_local_worker`) was environmental: the test checks live host RAM, and
-  only 2.47 GiB was available against a 2.44 GiB requirement plus reserve.
-- Skipped, as directed: the GPT-6-Sol final-strict re-review, the readiness
-  packet, and the 12-profile qualification matrix.
-- Committed the whole candidate (47 files) and pushed `codex/local-rtx4060`.
-  Remote SHA `df74efe7486046b752793fdfc2e58c6cf9adf1b1` matches the local one.
-- Confirmed the A100 ZIP SHA-256
-  (`7fa37f4a…4d82`), an idle GPU (0 MiB used), and no active worker.
-
-### 3.2 Full-run attempt
-
-- The detached full-run launch (`--fast-start-unqualified`) was denied by the
-  Claude Code permission classifier. It was not retried another way.
-- Throughput estimate: about 11.3 rows/hour at batch one, so 12,111 rows need
-  roughly **1,000 GPU-hours (about 6 weeks)**. Fixed protocol settings (model,
-  precision, 8 samples, 1,024-token cap) cannot be relaxed to shorten it.
-
-### 3.3 Downscaled 12-hour mini study
+### 3.1 The 12-hour mini profile
 
 The owner asked for a 12-hour mini project. Changes:
 
@@ -66,14 +44,11 @@ The owner asked for a 12-hour mini project. Changes:
   21 MATH (3 per subject), and 50 GSM-Plus (one per seed question), for
   111 rows. The protocol is unchanged: same model revision, NF4/FP16, seed 42,
   8 samples, temperature 0.7, top-k 50, 1,024-token cap.
-- `report.py` labels `mini_12h` exploratory, with no full-study gate
-  recommendation.
+- `report.py` labels `mini_12h` exploratory, with no gate recommendation.
 - Added the launch commands to `docs/runbook.md`.
 - Selection, report, and CLI tests: **53 passed**. Pushed as `05b947a`.
-- The A100 rows were not imported, because the importer accepts only the
-  `full` profile.
 
-### 3.4 Mini teacher run
+### 3.2 Mini teacher run
 
 | Item | Value |
 | --- | --- |
@@ -107,7 +82,7 @@ Outputs and backup:
   (`1e62bc4a…a5d6`).
 - Pushed as `548a7ca`.
 
-### 3.5 Mini distillation
+### 3.3 Mini distillation
 
 Script: `scripts/mini_distill.py`.
 
@@ -149,7 +124,7 @@ Results:
 Issues found and fixed:
 
 1. **Empty evaluation pool:** `load_examples` returns only the profile's
-   selection. The held-out pool now loads with the `full` profile.
+   selection. The held-out pool now loads every source row (an uncapped profile).
 2. **Student never stopped:** the base student never learned `<|im_end|>`,
    and LoRA cannot change that token's embedding. Training now ends each
    response with the model's own `<|endoftext|>`. Every condition is graded
@@ -163,6 +138,28 @@ Issues found and fixed:
 
 Outputs are in `results/mini-distill-20261002/`: `report.md`, `results.json`,
 `distill.log`, and per-question `eval_<condition>.jsonl`. Pushed as `f88a79a`.
+
+### 3.4 Scope cleanup: mini study only
+
+The owner set the mini study as the whole project and asked for every
+12,221-row setting to be removed:
+
+- Removed the `full`, `pilot`, `a100_12h`, and `a100_24h` profiles; only
+  `smoke` and `mini_12h` remain.
+- Removed the A100 archive importer, the profile-qualification matrix,
+  `--fast-start-unqualified`, `--import-run-zip`, `--qualification-manifest`,
+  the vLLM/hybrid backend and its workers, the NF4 artifact validator, the
+  vLLM requirements and setup script, and the 1.3 MB A100 test fixture.
+- Removed the full-study validation from `report.py` (A100/RTX origin counts,
+  archive provenance, pinned full-study revisions).
+- `scripts/mini_distill.py` now draws its held-out pool from an uncapped local
+  profile instead of the removed `full` profile.
+- Tests: 161 pass. `test_local_worker` now fakes host RAM instead of reading
+  the laptop's real free memory.
+- Check against the real run: regenerating the teacher report from a copy of
+  `mini12h-rtx4060-20261001-230236` gives `run_complete: true` and metrics
+  identical to the committed ones; the distillation input guard accepts all
+  111 rows.
 
 ## 4. Conclusions
 
@@ -178,10 +175,10 @@ Outputs are in `results/mini-distill-20261002/`: `report.md`, `results.json`,
 
 ## 5. Limitations
 
-- The study is a 111-question subset, not the planned 12,221-question study,
-  and the A100 rows were not used.
-- The run was fast-start and unqualified: no profile matrix and no final-strict
-  review. One environmental test error was accepted.
+- The teacher study is a 111-question subset, so its calibration metrics are
+  indicative only.
+- No batch-size qualification or external review was run; the run used the
+  conservative default memory profiles with automatic OOM backoff.
 - Distillation used one seed and one student size. Training-set sizes differ
   across conditions while epochs were fixed. The 512-token evaluation cap
   truncated 11–20% of student answers.
@@ -193,20 +190,19 @@ Outputs are in `results/mini-distill-20261002/`: `report.md`, `results.json`,
 
 ## 6. Suggested next steps
 
-1. To test the gate properly, generate more teacher data (for example
-   `a100_12h`-sized or larger) and run distillation with 3–5 seeds per
-   condition.
+These are possible extensions, not requirements:
+
+1. To test the gate properly, run distillation with 3–5 training seeds per
+   condition, or a second mini teacher run with a different selection seed.
 2. Raise the student evaluation cap to 1,024 tokens, or use
    Qwen2.5-0.5B-Instruct as the student to reduce truncation.
-3. If the full 12,221-row study is still wanted, run it from the runbook
-   command in an interactive terminal. Free host RAM first (close ChatGPT,
-   Codex, Epic Games) and keep the laptop cool.
 
 ## 7. Commits
 
 | Commit | Content |
 | --- | --- |
-| `df74efe` | Local RTX 4060 backend, archive import, fast-start path (candidate) |
+| `df74efe` | Local RTX 4060 backend (initial candidate) |
 | `05b947a` | `mini_12h` profile, report label, runbook section |
 | `548a7ca` | Mini teacher-run results, DEVLOG entry, backup hash |
 | `f88a79a` | Mini distillation script, results, DEVLOG entry |
+| (this change) | Remove all 12,221-row, A100-import, qualification, and vLLM code and docs |

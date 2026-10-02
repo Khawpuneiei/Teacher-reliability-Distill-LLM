@@ -1,3 +1,0 @@
-vllm==0.30.0
-vllm-bnb-plugin==0.0.3
-bitsandbytes==0.50.2
