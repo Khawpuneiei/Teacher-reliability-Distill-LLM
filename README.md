@@ -92,6 +92,8 @@ remain available under `results/`.
 
 ## Project docs
 
+- [Project guide (Thai)](docs/project-guide-th.md): everything to know about
+  the project, concepts, results, and limits, in Thai.
 - [Project roadmap](docs/project-roadmap.md): current goal and completion
   status.
 - [Mini study plan](docs/local-rtx4060-project-plan.md): scope, protocol, and
